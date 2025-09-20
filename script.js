@@ -13,12 +13,22 @@ const closeModal = document.getElementById('close-modal');
 const movieDetails = document.getElementById('movie-details');
 const ratedMoviesContainer = document.getElementById('rated-movies');
 
-// 로컬 스토리지에서 평가한 영화 데이터 관리
+// 로컬 스토리지에서 평가한 영화 데이터 관리 (Firebase로 이전됨)
 let ratedMovies = JSON.parse(localStorage.getItem('ratedMovies')) || {};
+
+// 추가 DOM 요소
+const loginBtn = document.getElementById('login-btn');
+const loginModal = document.getElementById('login-modal');
+const closeLoginModal = document.getElementById('close-login-modal');
+const googleLoginBtn = document.getElementById('google-login-btn');
+const emailLoginBtn = document.getElementById('email-login-btn');
+const emailSignupBtn = document.getElementById('email-signup-btn');
+const switchToSignupBtn = document.getElementById('switch-to-signup');
+const logoutBtn = document.getElementById('logout-btn');
 
 // 초기화 함수
 function init() {
-    // 이벤트 리스너 등록
+    // 기존 이벤트 리스너
     searchBtn.addEventListener('click', handleSearch);
     searchInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
@@ -32,7 +42,22 @@ function init() {
         }
     });
 
-    // 평가한 영화들 표시
+    // 로그인 관련 이벤트 리스너
+    loginBtn.addEventListener('click', showLoginModal);
+    closeLoginModal.addEventListener('click', closeLoginModal);
+    loginModal.addEventListener('click', (e) => {
+        if (e.target === loginModal) {
+            closeLoginModal();
+        }
+    });
+    
+    googleLoginBtn.addEventListener('click', signInWithGoogle);
+    emailLoginBtn.addEventListener('click', handleEmailLogin);
+    emailSignupBtn.addEventListener('click', handleEmailSignup);
+    switchToSignupBtn.addEventListener('click', toggleAuthMode);
+    logoutBtn.addEventListener('click', signOut);
+
+    // 평가한 영화들 표시 (Firebase에서 로드)
     displayRatedMovies();
 }
 
@@ -215,17 +240,37 @@ function setRating(movieId, rating) {
     ratingText.textContent = `${rating}/5`;
 }
 
-// 평점 저장
-function saveRating(movieId, title, posterPath) {
+// 평점 저장 (Firebase 연동)
+async function saveRating(movieId, title, posterPath, overview = '', releaseDate = '', voteAverage = 0) {
+    // 로그인 확인
+    const user = auth.currentUser;
+    if (!user) {
+        showNotification('평점을 저장하려면 로그인이 필요합니다.', 'error');
+        showLoginModal();
+        return;
+    }
+
     const activeStars = document.querySelectorAll(`[data-movie-id="${movieId}"] .star.active`);
     const rating = activeStars.length;
     
     if (rating === 0) {
-        alert('평점을 선택해주세요.');
+        showNotification('평점을 선택해주세요.', 'error');
         return;
     }
     
-    // 로컬 스토리지에 저장
+    // Firebase에 저장
+    const movieData = {
+        id: movieId,
+        title: title,
+        poster_path: posterPath,
+        overview: overview,
+        release_date: releaseDate,
+        vote_average: voteAverage
+    };
+    
+    await saveMovieRating(user.uid, movieData, rating);
+    
+    // 로컬 스토리지에도 저장 (오프라인 지원용)
     ratedMovies[movieId] = {
         id: movieId,
         title: title,
@@ -233,13 +278,15 @@ function saveRating(movieId, title, posterPath) {
         rating: rating,
         rated_at: new Date().toISOString()
     };
-    
     localStorage.setItem('ratedMovies', JSON.stringify(ratedMovies));
     
-    alert('평점이 저장되었습니다!');
-    
     // 평가한 영화 목록 업데이트
-    displayRatedMovies();
+    if (user) {
+        loadUserRatings(user.uid);
+    }
+    
+    // 모달 닫기
+    hideModal();
 }
 
 // 평가한 영화들 표시
@@ -313,6 +360,110 @@ document.querySelectorAll('.nav a[href^="#"]').forEach(anchor => {
         smoothScroll(target);
     });
 });
+
+// 로그인 모달 관련 함수들
+function showLoginModal() {
+    loginModal.classList.remove('hidden');
+}
+
+function closeLoginModal() {
+    loginModal.classList.add('hidden');
+    resetAuthForms();
+}
+
+function resetAuthForms() {
+    // 입력 필드 초기화
+    document.getElementById('email-input').value = '';
+    document.getElementById('password-input').value = '';
+    document.getElementById('signup-name-input').value = '';
+    document.getElementById('signup-email-input').value = '';
+    document.getElementById('signup-password-input').value = '';
+    
+    // 로그인 폼 표시, 회원가입 폼 숨김
+    document.getElementById('email-login-form').classList.remove('hidden');
+    document.getElementById('email-signup-form').classList.add('hidden');
+    document.getElementById('auth-switch-text').innerHTML = '계정이 없으신가요? <button id="switch-to-signup" class="switch-btn">회원가입</button>';
+    
+    // 이벤트 리스너 재등록
+    document.getElementById('switch-to-signup').addEventListener('click', toggleAuthMode);
+}
+
+function toggleAuthMode() {
+    const loginForm = document.getElementById('email-login-form');
+    const signupForm = document.getElementById('email-signup-form');
+    const switchText = document.getElementById('auth-switch-text');
+    
+    if (loginForm.classList.contains('hidden')) {
+        // 회원가입 -> 로그인
+        loginForm.classList.remove('hidden');
+        signupForm.classList.add('hidden');
+        switchText.innerHTML = '계정이 없으신가요? <button id="switch-to-signup" class="switch-btn">회원가입</button>';
+        document.getElementById('switch-to-signup').addEventListener('click', toggleAuthMode);
+    } else {
+        // 로그인 -> 회원가입
+        loginForm.classList.add('hidden');
+        signupForm.classList.remove('hidden');
+        switchText.innerHTML = '이미 계정이 있으신가요? <button id="switch-to-login" class="switch-btn">로그인</button>';
+        document.getElementById('switch-to-login').addEventListener('click', toggleAuthMode);
+    }
+}
+
+function handleEmailLogin() {
+    const email = document.getElementById('email-input').value.trim();
+    const password = document.getElementById('password-input').value.trim();
+    
+    if (!email || !password) {
+        showNotification('이메일과 비밀번호를 입력해주세요.', 'error');
+        return;
+    }
+    
+    signInWithEmail(email, password);
+}
+
+function handleEmailSignup() {
+    const name = document.getElementById('signup-name-input').value.trim();
+    const email = document.getElementById('signup-email-input').value.trim();
+    const password = document.getElementById('signup-password-input').value.trim();
+    
+    if (!name || !email || !password) {
+        showNotification('모든 필드를 입력해주세요.', 'error');
+        return;
+    }
+    
+    if (password.length < 6) {
+        showNotification('비밀번호는 6자 이상이어야 합니다.', 'error');
+        return;
+    }
+    
+    signUpWithEmail(name, email, password);
+}
+
+// 영화 상세 정보를 가져올 때 사용자 평점도 함께 로드
+async function showMovieDetails(movieId) {
+    try {
+        showLoading();
+        const movie = await getMovieDetails(movieId);
+        
+        // 사용자 평점 가져오기
+        const userRating = await getUserMovieRating(movieId);
+        
+        const modalContent = generateMovieDetailsHTML(movie, userRating);
+        movieDetails.innerHTML = modalContent;
+        movieModal.classList.remove('hidden');
+        
+        hideLoading();
+    } catch (error) {
+        hideLoading();
+        showNotification('영화 상세 정보를 불러오는데 실패했습니다.', 'error');
+    }
+}
+
+// 별점 HTML 생성 함수 (firebase-config.js에서 사용)
+function generateStarsHTML(rating) {
+    return Array.from({length: 5}, (_, i) => {
+        return `<i class="fas fa-star ${i < rating ? 'active' : ''}"></i>`;
+    }).join('');
+}
 
 // 페이지 로드 시 초기화
 document.addEventListener('DOMContentLoaded', init);

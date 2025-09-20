@@ -52,6 +52,8 @@ movie-site/
 
 이 프로젝트는 GitHub Pages를 통해 온라인에서 확인할 수 있습니다.
 
+**🔗 Live Demo**: https://byeongsun.github.io/movie-archive/
+
 ## 🔧 로컬 실행 방법
 
 1. 프로젝트 파일들을 다운로드

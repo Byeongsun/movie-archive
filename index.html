@@ -19,6 +19,17 @@
             <nav class="nav">
                 <a href="#search-section">검색</a>
                 <a href="#my-ratings">내 평점</a>
+                <div id="auth-section" class="auth-section">
+                    <div id="user-info" class="user-info hidden">
+                        <img id="user-avatar" class="user-avatar" src="" alt="프로필">
+                        <span id="user-name" class="user-name"></span>
+                        <button id="logout-btn" class="logout-btn">로그아웃</button>
+                    </div>
+                    <button id="login-btn" class="login-btn">
+                        <i class="fas fa-user"></i>
+                        로그인
+                    </button>
+                </div>
             </nav>
         </div>
     </header>
@@ -69,6 +80,67 @@
             </div>
         </div>
 
+        <!-- 로그인 모달 -->
+        <div id="login-modal" class="modal hidden">
+            <div class="modal-content login-modal-content">
+                <span class="close-btn" id="close-login-modal">&times;</span>
+                <div class="login-container">
+                    <h2 class="login-title">
+                        <i class="fas fa-film"></i>
+                        Movie Archive 로그인
+                    </h2>
+                    <p class="login-subtitle">개인 평점을 저장하고 관리하세요</p>
+                    
+                    <!-- 구글 로그인 -->
+                    <button id="google-login-btn" class="social-login-btn google-btn">
+                        <i class="fab fa-google"></i>
+                        Google로 로그인
+                    </button>
+                    
+                    <div class="divider">
+                        <span>또는</span>
+                    </div>
+                    
+                    <!-- 이메일 로그인 폼 -->
+                    <div id="email-login-form" class="email-form">
+                        <div class="form-group">
+                            <input type="email" id="email-input" placeholder="이메일 주소" required>
+                        </div>
+                        <div class="form-group">
+                            <input type="password" id="password-input" placeholder="비밀번호" required>
+                        </div>
+                        <button id="email-login-btn" class="email-login-btn">
+                            <i class="fas fa-envelope"></i>
+                            이메일로 로그인
+                        </button>
+                    </div>
+                    
+                    <div class="auth-switch">
+                        <p id="auth-switch-text">계정이 없으신가요? 
+                            <button id="switch-to-signup" class="switch-btn">회원가입</button>
+                        </p>
+                    </div>
+                    
+                    <!-- 회원가입 폼 (숨김 상태) -->
+                    <div id="email-signup-form" class="email-form hidden">
+                        <div class="form-group">
+                            <input type="text" id="signup-name-input" placeholder="이름" required>
+                        </div>
+                        <div class="form-group">
+                            <input type="email" id="signup-email-input" placeholder="이메일 주소" required>
+                        </div>
+                        <div class="form-group">
+                            <input type="password" id="signup-password-input" placeholder="비밀번호 (6자 이상)" required>
+                        </div>
+                        <button id="email-signup-btn" class="email-login-btn">
+                            <i class="fas fa-user-plus"></i>
+                            계정 만들기
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- 내 평점 섹션 -->
         <section id="my-ratings" class="my-ratings">
             <div class="container">
@@ -87,7 +159,13 @@
         </div>
     </footer>
 
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    
     <!-- JavaScript 파일 -->
+    <script src="firebase-config.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
