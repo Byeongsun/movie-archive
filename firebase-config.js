@@ -335,8 +335,8 @@ function formatDate(timestamp) {
     });
 }
 
-// 알림 표시
-function showNotification(message, type = 'info') {
+// 알림 표시 (전역 함수로 설정)
+window.showNotification = function(message, type = 'info') {
     // 기존 알림 제거
     const existingNotification = document.querySelector('.notification');
     if (existingNotification) {

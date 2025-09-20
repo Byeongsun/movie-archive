@@ -43,19 +43,21 @@ function init() {
     });
 
     // 로그인 관련 이벤트 리스너
-    loginBtn.addEventListener('click', showLoginModal);
-    closeLoginModal.addEventListener('click', closeLoginModal);
-    loginModal.addEventListener('click', (e) => {
-        if (e.target === loginModal) {
-            closeLoginModal();
-        }
-    });
+    if (loginBtn) loginBtn.addEventListener('click', showLoginModal);
+    if (closeLoginModal) closeLoginModal.addEventListener('click', hideLoginModal);
+    if (loginModal) {
+        loginModal.addEventListener('click', (e) => {
+            if (e.target === loginModal) {
+                hideLoginModal();
+            }
+        });
+    }
     
-    googleLoginBtn.addEventListener('click', signInWithGoogle);
-    emailLoginBtn.addEventListener('click', handleEmailLogin);
-    emailSignupBtn.addEventListener('click', handleEmailSignup);
-    switchToSignupBtn.addEventListener('click', toggleAuthMode);
-    logoutBtn.addEventListener('click', signOut);
+    if (googleLoginBtn) googleLoginBtn.addEventListener('click', handleGoogleLogin);
+    if (emailLoginBtn) emailLoginBtn.addEventListener('click', handleEmailLogin);
+    if (emailSignupBtn) emailSignupBtn.addEventListener('click', handleEmailSignup);
+    if (switchToSignupBtn) switchToSignupBtn.addEventListener('click', toggleAuthMode);
+    if (logoutBtn) logoutBtn.addEventListener('click', handleLogout);
 
     // 평가한 영화들 표시 (Firebase에서 로드)
     displayRatedMovies();
@@ -363,12 +365,33 @@ document.querySelectorAll('.nav a[href^="#"]').forEach(anchor => {
 
 // 로그인 모달 관련 함수들
 function showLoginModal() {
-    loginModal.classList.remove('hidden');
+    if (loginModal) {
+        loginModal.classList.remove('hidden');
+    }
 }
 
-function closeLoginModal() {
-    loginModal.classList.add('hidden');
-    resetAuthForms();
+function hideLoginModal() {
+    if (loginModal) {
+        loginModal.classList.add('hidden');
+        resetAuthForms();
+    }
+}
+
+// Firebase 연동 함수들 (firebase-config.js에서 호출)
+function handleGoogleLogin() {
+    if (typeof signInWithGoogle === 'function') {
+        signInWithGoogle();
+    } else {
+        alert('Firebase가 아직 설정되지 않았습니다. firebase-config.js를 확인해주세요.');
+    }
+}
+
+function handleLogout() {
+    if (typeof signOut === 'function') {
+        signOut();
+    } else {
+        alert('Firebase가 아직 설정되지 않았습니다.');
+    }
 }
 
 function resetAuthForms() {
@@ -409,33 +432,41 @@ function toggleAuthMode() {
 }
 
 function handleEmailLogin() {
-    const email = document.getElementById('email-input').value.trim();
-    const password = document.getElementById('password-input').value.trim();
+    const email = document.getElementById('email-input')?.value.trim();
+    const password = document.getElementById('password-input')?.value.trim();
     
     if (!email || !password) {
-        showNotification('이메일과 비밀번호를 입력해주세요.', 'error');
+        alert('이메일과 비밀번호를 입력해주세요.');
         return;
     }
     
-    signInWithEmail(email, password);
+    if (typeof signInWithEmail === 'function') {
+        signInWithEmail(email, password);
+    } else {
+        alert('Firebase가 아직 설정되지 않았습니다. firebase-config.js를 확인해주세요.');
+    }
 }
 
 function handleEmailSignup() {
-    const name = document.getElementById('signup-name-input').value.trim();
-    const email = document.getElementById('signup-email-input').value.trim();
-    const password = document.getElementById('signup-password-input').value.trim();
+    const name = document.getElementById('signup-name-input')?.value.trim();
+    const email = document.getElementById('signup-email-input')?.value.trim();
+    const password = document.getElementById('signup-password-input')?.value.trim();
     
     if (!name || !email || !password) {
-        showNotification('모든 필드를 입력해주세요.', 'error');
+        alert('모든 필드를 입력해주세요.');
         return;
     }
     
     if (password.length < 6) {
-        showNotification('비밀번호는 6자 이상이어야 합니다.', 'error');
+        alert('비밀번호는 6자 이상이어야 합니다.');
         return;
     }
     
-    signUpWithEmail(name, email, password);
+    if (typeof signUpWithEmail === 'function') {
+        signUpWithEmail(name, email, password);
+    } else {
+        alert('Firebase가 아직 설정되지 않았습니다. firebase-config.js를 확인해주세요.');
+    }
 }
 
 // 영화 상세 정보를 가져올 때 사용자 평점도 함께 로드
@@ -463,6 +494,36 @@ function generateStarsHTML(rating) {
     return Array.from({length: 5}, (_, i) => {
         return `<i class="fas fa-star ${i < rating ? 'active' : ''}"></i>`;
     }).join('');
+}
+
+// Firebase 미설정 시 임시 알림 함수
+function showNotification(message, type = 'info') {
+    if (typeof window.showNotification === 'function') {
+        // firebase-config.js의 showNotification 사용
+        window.showNotification(message, type);
+    } else {
+        // Firebase 미설정 시 기본 alert 사용
+        alert(message);
+    }
+}
+
+// Firebase 미설정 시 임시 로딩 함수
+function showLoading(message = '로딩 중...') {
+    const loading = document.getElementById('loading');
+    if (loading) {
+        loading.innerHTML = `
+            <i class="fas fa-spinner fa-spin"></i>
+            ${message}
+        `;
+        loading.classList.remove('hidden');
+    }
+}
+
+function hideLoading() {
+    const loading = document.getElementById('loading');
+    if (loading) {
+        loading.classList.add('hidden');
+    }
 }
 
 // 페이지 로드 시 초기화
