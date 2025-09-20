@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>나만의 영화 평점 아카이브</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <!-- 헤더 -->
+    <header class="header">
+        <div class="container">
+            <h1 class="logo">
+                <i class="fas fa-film"></i>
+                Movie Archive
+            </h1>
+            <nav class="nav">
+                <a href="#search-section">검색</a>
+                <a href="#my-ratings">내 평점</a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- 메인 컨테이너 -->
+    <main class="main-container">
+        <!-- 검색 섹션 -->
+        <section id="search-section" class="search-section">
+            <div class="container">
+                <h2>영화 검색</h2>
+                <div class="search-box">
+                    <input 
+                        type="text" 
+                        id="search-input" 
+                        placeholder="영화 제목을 입력하세요..."
+                        autocomplete="off"
+                    >
+                    <button id="search-btn" type="button">
+                        <i class="fas fa-search"></i>
+                        검색
+                    </button>
+                </div>
+                
+                <!-- 로딩 스피너 -->
+                <div id="loading" class="loading hidden">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    검색 중...
+                </div>
+            </div>
+        </section>
+
+        <!-- 검색 결과 섹션 -->
+        <section id="search-results" class="search-results">
+            <div class="container">
+                <div id="results-container" class="results-container">
+                    <!-- 검색 결과가 여기에 동적으로 추가됩니다 -->
+                </div>
+            </div>
+        </section>
+
+        <!-- 영화 상세 정보 모달 -->
+        <div id="movie-modal" class="modal hidden">
+            <div class="modal-content">
+                <span class="close-btn" id="close-modal">&times;</span>
+                <div id="movie-details" class="movie-details">
+                    <!-- 영화 상세 정보가 여기에 동적으로 추가됩니다 -->
+                </div>
+            </div>
+        </div>
+
+        <!-- 내 평점 섹션 -->
+        <section id="my-ratings" class="my-ratings">
+            <div class="container">
+                <h2>내가 평가한 영화들</h2>
+                <div id="rated-movies" class="rated-movies-container">
+                    <!-- 평가한 영화들이 여기에 표시됩니다 -->
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- 푸터 -->
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2025 Movie Archive. Powered by TMDB API</p>
+        </div>
+    </footer>
+
+    <!-- JavaScript 파일 -->
+    <script src="script.js"></script>
+</body>
+</html>
