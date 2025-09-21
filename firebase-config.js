@@ -1,13 +1,11 @@
 // Firebase 설정
 const firebaseConfig = {
-    // 여기에 Firebase 프로젝트 설정을 입력해야 합니다
-    // Firebase Console에서 프로젝트를 생성한 후 아래 정보를 업데이트하세요
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_PROJECT_ID.appspot.com",
-    messagingSenderId: "YOUR_SENDER_ID",
-    appId: "YOUR_APP_ID"
+    apiKey: "AIzaSyDcssZeknf32BFZugraxYrUK0ddKtTbsjU",
+    authDomain: "movie-archive-fa1e0.firebaseapp.com",
+    projectId: "movie-archive-fa1e0",
+    storageBucket: "movie-archive-fa1e0.firebasestorage.app",
+    messagingSenderId: "890265343346",
+    appId: "1:890265343346:web:6e60da7d2251b774bbf9eb"
 };
 
 // Firebase 초기화
