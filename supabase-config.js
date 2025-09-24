@@ -140,7 +140,7 @@ const SupabaseUtils = {
         const userProfile = await SupabaseUtils.getUserProfile(user.id);
         if (!userProfile) throw new Error('사용자 프로필을 찾을 수 없습니다');
 
-        const { error } = await supabase
+        const { error } = await supabaseClient
             .from('ratings')
             .delete()
             .eq('user_id', userProfile.id)

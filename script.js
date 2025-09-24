@@ -13,6 +13,15 @@ const closeModal = document.getElementById('close-modal');
 const movieDetails = document.getElementById('movie-details');
 const ratedMoviesContainer = document.getElementById('rated-movies');
 
+// 필터 관련 DOM 요소
+const toggleFiltersBtn = document.getElementById('toggle-filters');
+const filterPanel = document.getElementById('filter-panel');
+const genreFilter = document.getElementById('genre-filter');
+const yearFilter = document.getElementById('year-filter');
+const sortFilter = document.getElementById('sort-filter');
+const applyFiltersBtn = document.getElementById('apply-filters');
+const resetFiltersBtn = document.getElementById('reset-filters');
+
 // 로컬 스토리지에서 평가한 영화 데이터 관리 (Firebase로 이전됨)
 let ratedMovies = JSON.parse(localStorage.getItem('ratedMovies')) || {};
 
@@ -167,6 +176,17 @@ function init() {
             handleSearch();
         }
     });
+    
+    // 필터 관련 이벤트 리스너
+    if (toggleFiltersBtn) {
+        toggleFiltersBtn.addEventListener('click', toggleFilters);
+    }
+    if (applyFiltersBtn) {
+        applyFiltersBtn.addEventListener('click', applyFilters);
+    }
+    if (resetFiltersBtn) {
+        resetFiltersBtn.addEventListener('click', resetFilters);
+    }
     
     // 영화 상세 모달 이벤트 리스너
     if (closeModal) {
@@ -465,13 +485,62 @@ function displayRatedMovies() {
     `).join('');
 }
 
-// 유틸리티 함수들
-function showLoading() {
-    loading.classList.remove('hidden');
+// 유틸리티 함수들 (개선된 로딩 시스템)
+function showLoading(message = '영화를 검색하는 중...') {
+    if (loading) {
+        loading.classList.remove('hidden');
+        loading.innerHTML = `
+            <div class="loading-content">
+                <div class="loading-spinner">
+                    <div class="spinner"></div>
+                </div>
+                <p class="loading-message">${message}</p>
+            </div>
+        `;
+    }
 }
 
 function hideLoading() {
-    loading.classList.add('hidden');
+    if (loading) {
+        loading.classList.add('hidden');
+    }
+}
+
+// 특정 작업용 로딩 함수들
+function showRatingLoading(movieId) {
+    const ratingContainer = document.querySelector(`[data-movie-id="${movieId}"] .rating-container`);
+    if (ratingContainer) {
+        ratingContainer.innerHTML = `
+            <div class="rating-loading">
+                <div class="mini-spinner"></div>
+                <span>평점 저장 중...</span>
+            </div>
+        `;
+    }
+}
+
+function showAuthLoading(message = '로그인 중...') {
+    const authButtons = document.querySelectorAll('.auth-btn');
+    authButtons.forEach(btn => {
+        btn.disabled = true;
+        const originalContent = btn.innerHTML;
+        btn.innerHTML = `
+            <div class="mini-spinner"></div>
+            <span>${message}</span>
+        `;
+        btn.dataset.originalContent = originalContent;
+    });
+}
+
+function hideAuthLoading() {
+    const authButtons = document.querySelectorAll('.auth-btn');
+    authButtons.forEach(btn => {
+        btn.disabled = false;
+        if (btn.dataset.originalContent) {
+            btn.innerHTML = btn.dataset.originalContent;
+            delete btn.dataset.originalContent;
+        }
+    });
 }
 
 function clearResults() {
@@ -791,24 +860,97 @@ function handlePasswordReset() {
     }
 }
 
-// Supabase 미설정 시 임시 로딩 함수
-function showLoading(message = '로딩 중...') {
-    const loading = document.getElementById('loading');
-    if (loading) {
-        loading.innerHTML = `
-            <i class="fas fa-spinner fa-spin"></i>
-            ${message}
-        `;
-        loading.classList.remove('hidden');
+// 필터 관련 함수들
+function toggleFilters() {
+    if (filterPanel) {
+        filterPanel.classList.toggle('hidden');
+        const isHidden = filterPanel.classList.contains('hidden');
+        
+        if (toggleFiltersBtn) {
+            toggleFiltersBtn.innerHTML = isHidden 
+                ? '<i class="fas fa-filter"></i> 고급 필터'
+                : '<i class="fas fa-filter"></i> 필터 닫기';
+        }
     }
 }
 
-function hideLoading() {
-    const loading = document.getElementById('loading');
-    if (loading) {
-        loading.classList.add('hidden');
+function applyFilters() {
+    const query = searchInput.value.trim();
+    if (!query) {
+        alert('검색어를 입력해주세요.');
+        return;
+    }
+    
+    searchMoviesWithFilters(query);
+}
+
+function resetFilters() {
+    if (genreFilter) genreFilter.value = '';
+    if (yearFilter) yearFilter.value = '';
+    if (sortFilter) sortFilter.value = 'popularity.desc';
+    
+    // 기본 검색 실행
+    const query = searchInput.value.trim();
+    if (query) {
+        searchMovies();
     }
 }
+
+async function searchMoviesWithFilters(query) {
+    if (!query.trim()) {
+        alert('검색어를 입력해주세요.');
+        return;
+    }
+
+    // 로딩 표시
+    showLoading('필터 적용하여 검색 중...');
+    clearResults();
+
+    try {
+        // 필터 값 가져오기
+        const genre = genreFilter ? genreFilter.value : '';
+        const year = yearFilter ? yearFilter.value : '';
+        const sortBy = sortFilter ? sortFilter.value : 'popularity.desc';
+        
+        // API URL 구성
+        let url = `${BASE_URL}/search/movie?query=${encodeURIComponent(query)}`;
+        
+        if (genre) {
+            url += `&with_genres=${genre}`;
+        }
+        if (year) {
+            url += `&primary_release_year=${year}`;
+        }
+        url += `&sort_by=${sortBy}`;
+        
+        const response = await fetch(url, {
+            headers: {
+                'Authorization': `Bearer ${API_KEY}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        
+        if (data.results && data.results.length > 0) {
+            displayMovies(data.results);
+        } else {
+            showNoResults();
+        }
+        
+    } catch (error) {
+        console.error('필터 검색 오류:', error);
+        alert('영화 검색 중 오류가 발생했습니다. 다시 시도해주세요.');
+    } finally {
+        hideLoading();
+    }
+}
+
+// 로딩 함수들은 위에서 정의됨
 
 // 수동 디버깅 함수들 (콘솔에서 사용 가능)
 window.debugLogin = function() {
