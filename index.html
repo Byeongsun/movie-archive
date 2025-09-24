@@ -328,6 +328,16 @@
         // Supabase 로딩 확인
         window.addEventListener('load', function() {
             alert('페이지 로드 완료!');
+            
+            // URL 파라미터 확인 (OAuth 리디렉션 후)
+            const urlParams = new URLSearchParams(window.location.search);
+            const fragment = new URLSearchParams(window.location.hash.substring(1));
+            
+            alert('URL 확인:\n' + 
+                  'search: ' + window.location.search + '\n' +
+                  'hash: ' + window.location.hash + '\n' +
+                  'access_token: ' + (fragment.get('access_token') ? '있음' : '없음'));
+            
             console.log('Supabase 사용 가능:', typeof supabase !== 'undefined');
             console.log('현재 도메인:', window.location.hostname);
             

@@ -32,9 +32,10 @@ testSupabaseConnection();
 
 // 인증 상태 변경 리스너
 supabaseClient.auth.onAuthStateChange(async (event, session) => {
-    console.log('🔐 인증 상태 변경:', event);
+    alert('인증 상태 변경 감지!\n이벤트: ' + event + '\n세션: ' + (session ? '있음' : '없음'));
+    
     if (session) {
-        console.log('👤 사용자 로그인:', session.user.email);
+        alert('사용자 로그인 성공!\n이메일: ' + session.user.email);
         
         // 사용자 프로필 생성/업데이트
         await SupabaseUtils.upsertUserProfile(session.user);
@@ -45,7 +46,7 @@ supabaseClient.auth.onAuthStateChange(async (event, session) => {
         // 사용자 평점 로드
         loadUserRatings();
     } else {
-        console.log('👋 사용자 로그아웃');
+        alert('사용자 로그아웃');
         updateUIForLoggedOutUser();
         clearUserData();
     }
