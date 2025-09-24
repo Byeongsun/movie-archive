@@ -20,12 +20,12 @@
                 <a href="#search-section">검색</a>
                 <a href="#my-ratings">내 평점</a>
                 <div id="auth-section" class="auth-section">
-                    <div id="user-info" class="user-info hidden">
+                    <div id="user-info" class="user-info hidden" style="display: none;">
                         <img id="user-avatar" class="user-avatar" src="" alt="프로필">
                         <span id="user-name" class="user-name"></span>
                         <button id="logout-btn" class="logout-btn">로그아웃</button>
                     </div>
-                    <button id="login-btn" class="login-btn">
+                    <button id="login-btn" class="login-btn" style="display: flex;">
                         <i class="fas fa-user"></i>
                         로그인
                     </button>
@@ -73,7 +73,9 @@
         <!-- 영화 상세 정보 모달 -->
         <div id="movie-modal" class="modal hidden">
             <div class="modal-content">
-                <span class="close-btn" id="close-modal">&times;</span>
+                <span class="close-btn" id="close-modal" title="닫기">
+                    <i class="fas fa-times"></i>
+                </span>
                 <div id="movie-details" class="movie-details">
                     <!-- 영화 상세 정보가 여기에 동적으로 추가됩니다 -->
                 </div>
@@ -83,7 +85,9 @@
         <!-- 로그인 모달 -->
         <div id="login-modal" class="modal hidden">
             <div class="modal-content login-modal-content">
-                <span class="close-btn" id="close-login-modal">&times;</span>
+                <span class="close-btn" id="close-login-modal" title="닫기">
+                    <i class="fas fa-times"></i>
+                </span>
                 <div class="login-container">
                     <h2 class="login-title">
                         <i class="fas fa-film"></i>
@@ -109,16 +113,39 @@
                         <div class="form-group">
                             <input type="password" id="password-input" placeholder="비밀번호" required>
                         </div>
-                        <button id="email-login-btn" class="email-login-btn">
+                        <button id="email-login-btn" class="email-login-btn" onclick="handleEmailLogin()">
                             <i class="fas fa-envelope"></i>
                             이메일로 로그인
                         </button>
+                        
+                        <div class="forgot-password">
+                            <button id="forgot-password-btn" class="forgot-password-btn" onclick="showPasswordResetForm()">
+                                비밀번호를 잊으셨나요?
+                            </button>
+                        </div>
                     </div>
                     
                     <div class="auth-switch">
                         <p id="auth-switch-text">계정이 없으신가요? 
                             <button id="switch-to-signup" class="switch-btn">회원가입</button>
                         </p>
+                    </div>
+                    
+                    <!-- 비밀번호 재설정 폼 (숨김 상태) -->
+                    <div id="password-reset-form" class="email-form hidden">
+                        <h3 class="reset-title">비밀번호 재설정</h3>
+                        <p class="reset-description">가입하신 이메일 주소를 입력하시면 비밀번호 재설정 링크를 보내드립니다.</p>
+                        <div class="form-group">
+                            <input type="email" id="reset-email-input" placeholder="이메일 주소" required>
+                        </div>
+                        <button id="send-reset-btn" class="email-login-btn" onclick="handlePasswordReset()">
+                            <i class="fas fa-paper-plane"></i>
+                            재설정 이메일 발송
+                        </button>
+                        <button id="back-to-login-btn" class="back-btn" onclick="hidePasswordResetForm()">
+                            <i class="fas fa-arrow-left"></i>
+                            로그인으로 돌아가기
+                        </button>
                     </div>
                     
                     <!-- 회원가입 폼 (숨김 상태) -->
@@ -132,7 +159,7 @@
                         <div class="form-group">
                             <input type="password" id="signup-password-input" placeholder="비밀번호 (6자 이상)" required>
                         </div>
-                        <button id="email-signup-btn" class="email-login-btn">
+                        <button id="email-signup-btn" class="email-login-btn" onclick="handleEmailSignup()">
                             <i class="fas fa-user-plus"></i>
                             계정 만들기
                         </button>
@@ -159,13 +186,23 @@
         </div>
     </footer>
 
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <!-- Firebase SDK (최신 안정 버전) -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
     
     <!-- JavaScript 파일 -->
     <script src="firebase-config.js"></script>
     <script src="script.js"></script>
+    
+    <!-- Firebase 초기화 확인 스크립트 -->
+    <script>
+        // Firebase 로딩 확인
+        window.addEventListener('load', function() {
+            console.log('Firebase 사용 가능:', typeof firebase !== 'undefined');
+            console.log('Firebase Auth 사용 가능:', typeof firebase.auth !== 'undefined');
+            console.log('현재 도메인:', window.location.hostname);
+        });
+    </script>
 </body>
 </html>

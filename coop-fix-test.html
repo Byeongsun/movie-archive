@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>COOP 정책 오류 해결 테스트</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        .status { padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .info { background: #d1ecf1; color: #0c5460; }
+        .warning { background: #fff3cd; color: #856404; }
+        button { padding: 12px 24px; margin: 10px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; }
+        button:hover { background: #0056b3; }
+        .google-btn { background: #db4437; }
+        .google-btn:hover { background: #c23321; }
+        .method-section { background: #f8f9fa; padding: 20px; margin: 20px 0; border-radius: 8px; border-left: 4px solid #007bff; }
+        .method-section h3 { margin-top: 0; color: #495057; }
+        .user-info { background: #e7f3ff; padding: 15px; border-radius: 8px; margin: 15px 0; }
+    </style>
+</head>
+<body>
+    <h1>🔧 COOP 정책 오류 해결 테스트</h1>
+    
+    <div class="status info">
+        <strong>문제:</strong> Cross-Origin-Opener-Policy 정책으로 인한 Google 로그인 팝업 오류<br>
+        <strong>해결책:</strong> 로컬 환경에서는 리다이렉트 방식 사용, 프로덕션에서는 팝업 방식 사용
+    </div>
+    
+    <div id="status-container"></div>
+    
+    <div id="user-info" class="user-info" style="display: none;">
+        <h3>✅ 로그인 성공!</h3>
+        <p><strong>이메일:</strong> <span id="user-email"></span></p>
+        <p><strong>이름:</strong> <span id="user-name"></span></p>
+        <button onclick="testSignOut()">로그아웃</button>
+    </div>
+    
+    <div class="method-section">
+        <h3>🔄 방법 1: 자동 감지 (권장)</h3>
+        <p>로컬 환경은 리다이렉트, 프로덕션은 팝업을 자동으로 선택합니다.</p>
+        <button class="google-btn" onclick="testAutoMethod()">
+            <i class="fab fa-google"></i> Google 로그인 (자동 감지)
+        </button>
+    </div>
+    
+    <div class="method-section">
+        <h3>🔄 방법 2: 강제 리다이렉트</h3>
+        <p>항상 리다이렉트 방식을 사용합니다. (COOP 오류 해결)</p>
+        <button class="google-btn" onclick="testRedirectMethod()">
+            <i class="fab fa-google"></i> Google 로그인 (리다이렉트)
+        </button>
+    </div>
+    
+    <div class="method-section">
+        <h3>🪟 방법 3: 팝업 (참고용)</h3>
+        <p>기존 팝업 방식입니다. COOP 오류가 발생할 수 있습니다.</p>
+        <button class="google-btn" onclick="testPopupMethod()">
+            <i class="fab fa-google"></i> Google 로그인 (팝업)
+        </button>
+    </div>
+
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    
+    <script>
+        const statusContainer = document.getElementById('status-container');
+        
+        function addStatus(message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = `status ${type}`;
+            div.innerHTML = `[${new Date().toLocaleTimeString()}] ${message}`;
+            statusContainer.appendChild(div);
+            console.log(`[${type.toUpperCase()}] ${message}`);
+            statusContainer.scrollTop = statusContainer.scrollHeight;
+        }
+        
+        // Firebase 설정
+        const firebaseConfig = {
+            apiKey: "AIzaSyDcssZeknf32BFZugraxYrUK0ddKtTbsjU",
+            authDomain: "movie-archive-fa1e0.firebaseapp.com",
+            projectId: "movie-archive-fa1e0",
+            storageBucket: "movie-archive-fa1e0.firebasestorage.app",
+            messagingSenderId: "890265343346",
+            appId: "1:890265343346:web:6e60da7d2251b774bbf9eb"
+        };
+        
+        let auth, googleProvider;
+        
+        // Firebase 초기화
+        try {
+            if (!firebase.apps.length) {
+                firebase.initializeApp(firebaseConfig);
+                addStatus('✅ Firebase 초기화 완료', 'success');
+            }
+            
+            auth = firebase.auth();
+            googleProvider = new firebase.auth.GoogleAuthProvider();
+            googleProvider.addScope('email');
+            googleProvider.addScope('profile');
+            
+            addStatus('🔧 Google Provider 설정 완료', 'success');
+            
+        } catch (error) {
+            addStatus(`❌ Firebase 초기화 실패: ${error.message}`, 'error');
+        }
+        
+        // 인증 상태 변경 리스너
+        auth.onAuthStateChanged(async (user) => {
+            if (user) {
+                addStatus(`✅ 사용자 로그인 감지: ${user.email}`, 'success');
+                showUserInfo(user);
+            } else {
+                addStatus('👤 로그아웃 상태', 'info');
+                hideUserInfo();
+                
+                // 페이지 로드 시 리다이렉트 결과 확인
+                try {
+                    const result = await auth.getRedirectResult();
+                    if (result && result.user) {
+                        addStatus(`🔄 리다이렉트 로그인 성공: ${result.user.email}`, 'success');
+                        showUserInfo(result.user);
+                    }
+                } catch (error) {
+                    if (error.code !== 'auth/no-auth-event') {
+                        addStatus(`❌ 리다이렉트 결과 처리 오류: ${error.message}`, 'error');
+                    }
+                }
+            }
+        });
+        
+        // 사용자 정보 표시
+        function showUserInfo(user) {
+            document.getElementById('user-info').style.display = 'block';
+            document.getElementById('user-email').textContent = user.email;
+            document.getElementById('user-name').textContent = user.displayName || '이름 없음';
+        }
+        
+        // 사용자 정보 숨기기
+        function hideUserInfo() {
+            document.getElementById('user-info').style.display = 'none';
+        }
+        
+        // 방법 1: 자동 감지 (로컬은 리다이렉트, 프로덕션은 팝업)
+        async function testAutoMethod() {
+            try {
+                addStatus('🔍 환경 감지 중...', 'info');
+                
+                const isLocal = window.location.hostname === 'localhost' || 
+                               window.location.hostname === '127.0.0.1' ||
+                               window.location.hostname.includes('local');
+                
+                if (isLocal) {
+                    addStatus('🏠 로컬 환경 감지 - 리다이렉트 방식 사용', 'info');
+                    await testRedirectMethod();
+                } else {
+                    addStatus('🌐 프로덕션 환경 감지 - 팝업 방식 사용', 'info');
+                    await testPopupMethod();
+                }
+                
+            } catch (error) {
+                addStatus(`❌ 자동 감지 오류: ${error.message}`, 'error');
+            }
+        }
+        
+        // 방법 2: 리다이렉트 방식
+        async function testRedirectMethod() {
+            try {
+                addStatus('🔄 리다이렉트 로그인 시작...', 'info');
+                addStatus('⚠️ 페이지가 Google로 리다이렉트됩니다.', 'warning');
+                
+                await auth.signInWithRedirect(googleProvider);
+                
+            } catch (error) {
+                addStatus(`❌ 리다이렉트 로그인 오류: ${error.message}`, 'error');
+                console.error('리다이렉트 오류:', error);
+            }
+        }
+        
+        // 방법 3: 팝업 방식 (참고용)
+        async function testPopupMethod() {
+            try {
+                addStatus('🪟 팝업 로그인 시작...', 'info');
+                
+                const result = await auth.signInWithPopup(googleProvider);
+                const user = result.user;
+                
+                addStatus(`✅ 팝업 로그인 성공: ${user.email}`, 'success');
+                
+            } catch (error) {
+                addStatus(`❌ 팝업 로그인 오류: ${error.code}`, 'error');
+                
+                if (error.message && error.message.includes('Cross-Origin-Opener-Policy')) {
+                    addStatus('🔧 COOP 정책 오류 감지 - 리다이렉트 방식을 사용하세요!', 'warning');
+                } else if (error.code === 'auth/popup-blocked') {
+                    addStatus('🚫 팝업이 차단되었습니다 - 리다이렉트 방식을 사용하세요!', 'warning');
+                } else if (error.code === 'auth/popup-closed-by-user') {
+                    addStatus('❌ 사용자가 팝업을 닫았습니다.', 'info');
+                }
+                
+                console.error('팝업 오류:', error);
+            }
+        }
+        
+        // 로그아웃
+        async function testSignOut() {
+            try {
+                await auth.signOut();
+                addStatus('👋 로그아웃 완료', 'success');
+                hideUserInfo();
+            } catch (error) {
+                addStatus(`❌ 로그아웃 오류: ${error.message}`, 'error');
+            }
+        }
+        
+        // 페이지 로드 시
+        window.addEventListener('load', () => {
+            addStatus('🚀 COOP 정책 오류 해결 테스트 페이지 로드 완료', 'info');
+            addStatus(`🌐 현재 환경: ${window.location.hostname}`, 'info');
+            addStatus('📝 각 방법을 테스트해보세요.', 'info');
+        });
+    </script>
+</body>
+</html>
+
+
