@@ -607,9 +607,14 @@ window.hideLoginModal = hideLoginModal;
 
 // Supabase 연동 함수들 (supabase-config.js에서 호출)
 function handleGoogleLogin() {
+    console.log('🔄 handleGoogleLogin 함수 호출됨');
+    console.log('🔍 signInWithGoogle 함수 존재 여부:', typeof signInWithGoogle);
+    
     if (typeof signInWithGoogle === 'function') {
+        console.log('✅ signInWithGoogle 함수 호출 시작');
         signInWithGoogle();
     } else {
+        console.error('❌ signInWithGoogle 함수를 찾을 수 없음');
         alert('Supabase가 아직 설정되지 않았습니다. supabase-config.js를 확인해주세요.');
     }
 }
