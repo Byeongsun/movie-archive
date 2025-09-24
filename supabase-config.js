@@ -171,28 +171,54 @@ const SupabaseUtils = {
 // 인증 함수들
 async function signInWithGoogle() {
     console.log('🔄 Google 로그인 시도...');
+    console.log('📍 현재 URL:', window.location.href);
+    console.log('📍 Origin:', window.location.origin);
     
     try {
-        // OAuth 호출 with redirectTo 설정
+        // Supabase 클라이언트 상태 확인
+        const { data: sessionData, error: sessionError } = await supabaseClient.auth.getSession();
+        console.log('🔍 현재 세션 상태:', sessionData, sessionError);
+        
+        // OAuth 호출 with 다양한 옵션 시도
         const { data, error } = await supabaseClient.auth.signInWithOAuth({
             provider: 'google',
             options: {
-                redirectTo: window.location.origin
+                redirectTo: `${window.location.origin}/`,
+                queryParams: {
+                    access_type: 'offline',
+                    prompt: 'consent'
+                }
             }
         });
         
+        console.log('🔍 OAuth 응답:', { data, error });
+        
         if (error) {
             console.error('Google 로그인 실패:', error);
+            console.error('오류 세부사항:', {
+                message: error.message,
+                status: error.status,
+                statusText: error.statusText
+            });
             alert('Google 로그인에 실패했습니다: ' + error.message);
             return;
         }
         
         console.log('✅ Google 로그인 리디렉션 시작');
-        console.log('📍 리디렉션 URL:', window.location.origin);
-        // OAuth는 리디렉션이므로 여기서 모달을 닫지 않음
+        console.log('📍 리디렉션 URL:', `${window.location.origin}/`);
+        console.log('📍 OAuth 데이터:', data);
+        
+        // 잠시 후 모달 닫기 (리디렉션 전에)
+        setTimeout(() => {
+            console.log('🔄 로그인 모달 닫기 시도...');
+            if (typeof hideLoginModal === 'function') {
+                hideLoginModal();
+            }
+        }, 1000);
         
     } catch (error) {
         console.error('Google 로그인 오류:', error);
+        console.error('오류 스택:', error.stack);
         alert('Google 로그인 중 오류가 발생했습니다: ' + error.message);
     }
 }
