@@ -173,9 +173,12 @@ async function signInWithGoogle() {
     console.log('🔄 Google 로그인 시도...');
     
     try {
-        // 간단한 OAuth 호출로 시도
+        // OAuth 호출 with redirectTo 설정
         const { data, error } = await supabaseClient.auth.signInWithOAuth({
-            provider: 'google'
+            provider: 'google',
+            options: {
+                redirectTo: window.location.origin
+            }
         });
         
         if (error) {
@@ -185,6 +188,7 @@ async function signInWithGoogle() {
         }
         
         console.log('✅ Google 로그인 리디렉션 시작');
+        console.log('📍 리디렉션 URL:', window.location.origin);
         // OAuth는 리디렉션이므로 여기서 모달을 닫지 않음
         
     } catch (error) {
