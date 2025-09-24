@@ -359,10 +359,18 @@
                           '\nrefresh_token: ' + (refreshToken ? '있음' : '없음'));
                     
                     // setSession으로 직접 세션 설정
-                    supabaseClient.auth.setSession({
+                    alert('setSession 호출 시작...');
+                    
+                    const sessionPromise = supabaseClient.auth.setSession({
                         access_token: accessToken,
                         refresh_token: refreshToken
-                    }).then(({ data, error }) => {
+                    });
+                    
+                    const timeoutPromise = new Promise((_, reject) => 
+                        setTimeout(() => reject(new Error('setSession 타임아웃 (10초)')), 10000)
+                    );
+                    
+                    Promise.race([sessionPromise, timeoutPromise]).then(({ data, error }) => {
                         alert('세션 설정 결과:\n' + 
                               '세션: ' + (data.session ? '있음' : '없음') + '\n' +
                               '사용자: ' + (data.session?.user?.email || '없음') + '\n' +
