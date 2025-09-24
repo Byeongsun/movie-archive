@@ -628,17 +628,17 @@ function updateUIForLoggedInUser(user) {
     
     // 로그인/로그아웃 버튼 상태 변경
     const loginBtn = document.getElementById('login-btn');
+    const userInfo = document.getElementById('user-info');
     const logoutBtn = document.getElementById('logout-btn');
+    const userName = document.getElementById('user-name');
     
     if (loginBtn) loginBtn.style.display = 'none';
-    if (logoutBtn) logoutBtn.style.display = 'flex';
-    
-    // 사용자 정보 표시 (선택사항)
-    const userInfo = document.getElementById('user-info');
     if (userInfo) {
-        userInfo.textContent = `안녕하세요, ${user.email}님`;
-        userInfo.style.display = 'block';
+        userInfo.style.display = 'flex';
+        userInfo.classList.remove('hidden');
     }
+    if (userName) userName.textContent = user.email;
+    if (logoutBtn) logoutBtn.style.display = 'flex';
     
     // 로그인 모달 닫기
     hideLoginModal();
@@ -654,16 +654,15 @@ function updateUIForLoggedOutUser() {
     
     // 로그인/로그아웃 버튼 상태 변경
     const loginBtn = document.getElementById('login-btn');
+    const userInfo = document.getElementById('user-info');
     const logoutBtn = document.getElementById('logout-btn');
     
     if (loginBtn) loginBtn.style.display = 'flex';
-    if (logoutBtn) logoutBtn.style.display = 'none';
-    
-    // 사용자 정보 숨기기
-    const userInfo = document.getElementById('user-info');
     if (userInfo) {
         userInfo.style.display = 'none';
+        userInfo.classList.add('hidden');
     }
+    if (logoutBtn) logoutBtn.style.display = 'none';
     
     // 사용자 데이터 초기화
     clearUserData();
@@ -1068,7 +1067,28 @@ window.reinitializeDOM = function() {
 document.addEventListener('DOMContentLoaded', function() {
     init();
     checkUrlParams();
+    initializeFirstScreen();
 });
+
+// 첫 화면 초기화
+function initializeFirstScreen() {
+    console.log('🎬 첫 화면 초기화...');
+    
+    // 배경 데이터 초기화
+    clearResults();
+    clearUserData();
+    
+    // 로그인 모달 자동 표시 (비밀번호 재설정이 아닌 경우)
+    const urlParams = new URLSearchParams(window.location.search);
+    const action = urlParams.get('action');
+    
+    if (action !== 'reset-password') {
+        showLoginModal();
+    }
+    
+    // 기본 상태로 UI 설정
+    updateUIForLoggedOutUser();
+}
 
 // URL 파라미터 확인 (비밀번호 재설정 등)
 function checkUrlParams() {
@@ -1092,20 +1112,73 @@ function showPasswordChangeModal() {
     const modal = document.getElementById('password-change-modal');
     if (modal) {
         modal.classList.remove('hidden');
+        // 유효성 검사 설정
+        setTimeout(() => {
+            setupPasswordValidation();
+        }, 100);
     }
 }
 
 // 비밀번호 변경 폼 제출 처리
 function handlePasswordChange(event) {
     event.preventDefault();
+    console.log('🔄 비밀번호 변경 폼 제출됨');
     
     const newPassword = document.getElementById('new-password').value;
     const confirmPassword = document.getElementById('confirm-password').value;
     
+    // 유효성 검사
+    if (!newPassword || !confirmPassword) {
+        alert('모든 필드를 입력해주세요.');
+        return;
+    }
+    
+    if (newPassword.length < 6) {
+        alert('비밀번호는 최소 6자 이상이어야 합니다.');
+        return;
+    }
+    
+    if (newPassword !== confirmPassword) {
+        alert('비밀번호가 일치하지 않습니다.');
+        return;
+    }
+    
+    // 비밀번호 변경 실행
     if (typeof changePassword === 'function') {
         changePassword(newPassword, confirmPassword);
     } else {
         alert('비밀번호 변경 기능을 사용할 수 없습니다.');
+    }
+}
+
+// 비밀번호 입력 실시간 유효성 검사
+function setupPasswordValidation() {
+    const newPasswordInput = document.getElementById('new-password');
+    const confirmPasswordInput = document.getElementById('confirm-password');
+    const matchMessage = document.getElementById('password-match-message');
+    
+    if (newPasswordInput && confirmPasswordInput && matchMessage) {
+        function checkPasswordMatch() {
+            const newPassword = newPasswordInput.value;
+            const confirmPassword = confirmPasswordInput.value;
+            
+            if (confirmPassword.length > 0) {
+                if (newPassword === confirmPassword) {
+                    matchMessage.textContent = '✅ 비밀번호가 일치합니다';
+                    matchMessage.style.color = '#28a745';
+                    matchMessage.style.display = 'block';
+                } else {
+                    matchMessage.textContent = '❌ 비밀번호가 일치하지 않습니다';
+                    matchMessage.style.color = '#dc3545';
+                    matchMessage.style.display = 'block';
+                }
+            } else {
+                matchMessage.style.display = 'none';
+            }
+        }
+        
+        newPasswordInput.addEventListener('input', checkPasswordMatch);
+        confirmPasswordInput.addEventListener('input', checkPasswordMatch);
     }
 }
 
