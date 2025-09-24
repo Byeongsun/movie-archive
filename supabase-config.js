@@ -12,6 +12,21 @@ const supabaseClient = createClient(supabaseConfig.url, supabaseConfig.anonKey);
 console.log('🚀 Supabase 클라이언트 초기화 완료');
 console.log('📍 프로젝트 URL:', supabaseConfig.url);
 
+// 연결 테스트
+async function testSupabaseConnection() {
+    try {
+        const { data, error } = await supabaseClient.auth.getSession();
+        console.log('🔍 Supabase 연결 테스트:', { data, error });
+        return !error;
+    } catch (error) {
+        console.error('❌ Supabase 연결 실패:', error);
+        return false;
+    }
+}
+
+// 페이지 로드 시 연결 테스트
+testSupabaseConnection();
+
 // 인증 상태 변경 리스너
 supabaseClient.auth.onAuthStateChange(async (event, session) => {
     console.log('🔐 인증 상태 변경:', event);
@@ -161,7 +176,12 @@ async function signInWithGoogle() {
         const { data, error } = await supabaseClient.auth.signInWithOAuth({
             provider: 'google',
             options: {
-                redirectTo: window.location.origin
+                redirectTo: window.location.origin,
+                scopes: 'https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile',
+                queryParams: {
+                    access_type: 'offline',
+                    prompt: 'consent'
+                }
             }
         });
         
@@ -171,12 +191,12 @@ async function signInWithGoogle() {
             return;
         }
         
-        console.log('✅ Google 로그인 성공');
-        hideLoginModal();
+        console.log('✅ Google 로그인 리디렉션 시작');
+        // OAuth는 리디렉션이므로 여기서 모달을 닫지 않음
         
     } catch (error) {
         console.error('Google 로그인 오류:', error);
-        alert('Google 로그인 중 오류가 발생했습니다.');
+        alert('Google 로그인 중 오류가 발생했습니다: ' + error.message);
     }
 }
 
@@ -191,7 +211,24 @@ async function signInWithEmail(email, password) {
         
         if (error) {
             console.error('이메일 로그인 실패:', error);
-            alert('로그인에 실패했습니다: ' + error.message);
+            console.error('오류 세부사항:', {
+                message: error.message,
+                status: error.status,
+                statusText: error.statusText
+            });
+            
+            let errorMessage = '로그인에 실패했습니다.';
+            if (error.message.includes('Invalid login credentials')) {
+                errorMessage = '이메일 또는 비밀번호가 올바르지 않습니다.';
+            } else if (error.message.includes('Email not confirmed')) {
+                errorMessage = '이메일 인증이 필요합니다. 이메일을 확인해주세요.';
+            } else if (error.message.includes('Too many requests')) {
+                errorMessage = '너무 많은 시도가 있었습니다. 잠시 후 다시 시도해주세요.';
+            } else {
+                errorMessage = `로그인 실패: ${error.message}`;
+            }
+            
+            alert(errorMessage);
             return;
         }
         
@@ -220,12 +257,35 @@ async function signUpWithEmail(name, email, password) {
         
         if (error) {
             console.error('회원가입 실패:', error);
-            alert('회원가입에 실패했습니다: ' + error.message);
+            console.error('오류 세부사항:', {
+                message: error.message,
+                status: error.status,
+                statusText: error.statusText
+            });
+            
+            let errorMessage = '회원가입에 실패했습니다.';
+            if (error.message.includes('User already registered')) {
+                errorMessage = '이미 가입된 이메일입니다. 로그인을 시도해주세요.';
+            } else if (error.message.includes('Password should be at least')) {
+                errorMessage = '비밀번호는 최소 6자 이상이어야 합니다.';
+            } else if (error.message.includes('Invalid email')) {
+                errorMessage = '올바른 이메일 주소를 입력해주세요.';
+            } else {
+                errorMessage = `회원가입 실패: ${error.message}`;
+            }
+            
+            alert(errorMessage);
             return;
         }
         
         console.log('✅ 회원가입 성공:', data.user?.email);
-        alert('회원가입이 완료되었습니다! 이메일을 확인해주세요.');
+        
+        if (data.user && !data.user.email_confirmed_at) {
+            alert('회원가입이 완료되었습니다! 이메일을 확인하여 계정을 활성화해주세요.');
+        } else {
+            alert('회원가입이 완료되었습니다!');
+        }
+        
         hideLoginModal();
         
     } catch (error) {
