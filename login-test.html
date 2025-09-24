@@ -90,6 +90,7 @@
             <p>Access Token: <span id="access-token-status">-</span></p>
             <button onclick="checkSession()">세션 확인</button>
             <button onclick="checkUser()">사용자 확인</button>
+            <button onclick="testConnection()">연결 테스트</button>
         </div>
     </div>
 
@@ -206,7 +207,13 @@
             updateStatus('세션 확인 중...');
             
             try {
-                const { data, error } = await supabaseClient.auth.getSession();
+                // 타임아웃 추가
+                const sessionPromise = supabaseClient.auth.getSession();
+                const timeoutPromise = new Promise((_, reject) => 
+                    setTimeout(() => reject(new Error('세션 확인 타임아웃 (5초)')), 5000)
+                );
+                
+                const { data, error } = await Promise.race([sessionPromise, timeoutPromise]);
                 
                 if (error) {
                     console.error('❌ 세션 확인 실패:', error);
@@ -230,7 +237,13 @@
             updateStatus('사용자 확인 중...');
             
             try {
-                const { data, error } = await supabaseClient.auth.getUser();
+                // 타임아웃 추가
+                const userPromise = supabaseClient.auth.getUser();
+                const timeoutPromise = new Promise((_, reject) => 
+                    setTimeout(() => reject(new Error('사용자 확인 타임아웃 (5초)')), 5000)
+                );
+                
+                const { data, error } = await Promise.race([userPromise, timeoutPromise]);
                 
                 if (error) {
                     console.error('❌ 사용자 확인 실패:', error);
@@ -245,6 +258,31 @@
             } catch (error) {
                 console.error('❌ 사용자 확인 오류:', error);
                 updateStatus('사용자 확인 오류: ' + error.message);
+            }
+        }
+        
+        // 연결 테스트
+        async function testConnection() {
+            console.log('🔍 Supabase 연결 테스트...');
+            updateStatus('연결 테스트 중...');
+            
+            try {
+                // 간단한 쿼리로 연결 테스트
+                const { data, error } = await supabaseClient
+                    .from('users')
+                    .select('count')
+                    .limit(1);
+                
+                if (error) {
+                    console.log('⚠️ 쿼리 오류 (정상일 수 있음):', error);
+                    updateStatus('연결됨 (쿼리 오류: ' + error.message + ')');
+                } else {
+                    console.log('✅ 연결 성공');
+                    updateStatus('연결 성공');
+                }
+            } catch (error) {
+                console.error('❌ 연결 실패:', error);
+                updateStatus('연결 실패: ' + error.message);
             }
         }
         
