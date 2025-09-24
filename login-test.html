@@ -91,6 +91,8 @@
             <button onclick="checkSession()">세션 확인</button>
             <button onclick="checkUser()">사용자 확인</button>
             <button onclick="testConnection()">연결 테스트</button>
+            <button onclick="checkSupabaseStatus()">Supabase 상태</button>
+            <button onclick="reinitializeClient()">클라이언트 재초기화</button>
         </div>
     </div>
 
@@ -105,10 +107,17 @@
         };
         
         // Supabase 클라이언트 초기화
-        const { createClient } = supabase;
-        const supabaseClient = createClient(supabaseConfig.url, supabaseConfig.anonKey);
+        let supabaseClient;
         
-        console.log('✅ Supabase 클라이언트 초기화 완료');
+        try {
+            const { createClient } = supabase;
+            supabaseClient = createClient(supabaseConfig.url, supabaseConfig.anonKey);
+            console.log('✅ Supabase 클라이언트 초기화 완료');
+            console.log('🔍 클라이언트 객체:', supabaseClient);
+            console.log('🔍 Auth 객체:', supabaseClient.auth);
+        } catch (error) {
+            console.error('❌ Supabase 클라이언트 초기화 실패:', error);
+        }
         
         // DOM 요소들
         const loginSection = document.getElementById('login-section');
@@ -283,6 +292,47 @@
             } catch (error) {
                 console.error('❌ 연결 실패:', error);
                 updateStatus('연결 실패: ' + error.message);
+            }
+        }
+        
+        // Supabase 상태 확인
+        function checkSupabaseStatus() {
+            console.log('🔍 Supabase 상태 확인...');
+            updateStatus('Supabase 상태 확인 중...');
+            
+            try {
+                console.log('전역 supabase 객체:', typeof supabase);
+                console.log('supabaseClient 존재:', !!supabaseClient);
+                console.log('supabaseClient.auth 존재:', !!supabaseClient?.auth);
+                console.log('supabaseClient.auth.getSession 존재:', typeof supabaseClient?.auth?.getSession);
+                
+                updateStatus('Supabase 상태: ' + 
+                    'SDK=' + (typeof supabase !== 'undefined') + 
+                    ', Client=' + (!!supabaseClient) + 
+                    ', Auth=' + (!!supabaseClient?.auth));
+            } catch (error) {
+                console.error('❌ 상태 확인 오류:', error);
+                updateStatus('상태 확인 오류: ' + error.message);
+            }
+        }
+        
+        // 클라이언트 재초기화
+        function reinitializeClient() {
+            console.log('🔄 Supabase 클라이언트 재초기화...');
+            updateStatus('클라이언트 재초기화 중...');
+            
+            try {
+                if (typeof supabase !== 'undefined' && supabase.createClient) {
+                    supabaseClient = supabase.createClient(supabaseConfig.url, supabaseConfig.anonKey);
+                    console.log('✅ 재초기화 성공');
+                    updateStatus('재초기화 성공');
+                } else {
+                    console.error('❌ Supabase SDK를 찾을 수 없음');
+                    updateStatus('Supabase SDK를 찾을 수 없음');
+                }
+            } catch (error) {
+                console.error('❌ 재초기화 실패:', error);
+                updateStatus('재초기화 실패: ' + error.message);
             }
         }
         

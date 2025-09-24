@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>로컬 로그인 테스트</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .login-section {
+            margin-bottom: 20px;
+            padding: 20px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+        }
+        .user-info {
+            background: #e8f5e8;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        button {
+            background: #4285f4;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+        }
+        button:hover {
+            background: #3367d6;
+        }
+        .logout-btn {
+            background: #dc3545;
+        }
+        .logout-btn:hover {
+            background: #c82333;
+        }
+        .hidden {
+            display: none;
+        }
+        .status {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+            background: #f8f9fa;
+            border-left: 4px solid #007bff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎬 로컬 로그인 테스트</h1>
+        <p><strong>참고:</strong> 이것은 Supabase 연결 문제를 우회한 로컬 테스트입니다.</p>
+        
+        <!-- 로그인 섹션 -->
+        <div id="login-section" class="login-section">
+            <h2>로그인</h2>
+            <button id="google-login-btn" onclick="simulateGoogleLogin()">
+                🔐 Google로 로그인 (시뮬레이션)
+            </button>
+            <div id="status" class="status">로그인되지 않음</div>
+        </div>
+        
+        <!-- 사용자 정보 섹션 -->
+        <div id="user-section" class="user-info hidden">
+            <h2>사용자 정보</h2>
+            <p>이메일: <span id="user-email">-</span></p>
+            <button id="logout-btn" class="logout-btn" onclick="handleLogout()">
+                🚪 로그아웃
+            </button>
+        </div>
+        
+        <!-- 디버그 정보 -->
+        <div class="login-section">
+            <h3>디버그 정보</h3>
+            <p>현재 URL: <span id="current-url">-</span></p>
+            <p>로컬 스토리지: <span id="local-storage-status">-</span></p>
+            <button onclick="checkLocalStorage()">로컬 스토리지 확인</button>
+            <button onclick="clearLocalStorage()">로컬 스토리지 초기화</button>
+        </div>
+    </div>
+
+    <script>
+        // DOM 요소들
+        const loginSection = document.getElementById('login-section');
+        const userSection = document.getElementById('user-section');
+        const userEmail = document.getElementById('user-email');
+        const status = document.getElementById('status');
+        const currentUrl = document.getElementById('current-url');
+        const localStorageStatus = document.getElementById('local-storage-status');
+        
+        // 페이지 로드 시 초기화
+        window.addEventListener('load', function() {
+            console.log('📄 페이지 로드 완료');
+            updateDebugInfo();
+            checkExistingLogin();
+        });
+        
+        // 기존 로그인 확인
+        function checkExistingLogin() {
+            const savedUser = localStorage.getItem('moviesite_user');
+            if (savedUser) {
+                try {
+                    const user = JSON.parse(savedUser);
+                    console.log('✅ 기존 로그인 발견:', user.email);
+                    showUserInfo(user);
+                } catch (error) {
+                    console.error('❌ 저장된 사용자 정보 파싱 실패:', error);
+                    localStorage.removeItem('moviesite_user');
+                }
+            }
+        }
+        
+        // Google 로그인 시뮬레이션
+        function simulateGoogleLogin() {
+            console.log('🔄 Google 로그인 시뮬레이션...');
+            updateStatus('Google 로그인 중...');
+            
+            // 실제 Google OAuth 시뮬레이션
+            setTimeout(() => {
+                const user = {
+                    email: 'sunson0@gmail.com',
+                    name: 'Test User',
+                    loginTime: new Date().toISOString()
+                };
+                
+                // 로컬 스토리지에 저장
+                localStorage.setItem('moviesite_user', JSON.stringify(user));
+                
+                console.log('✅ 로그인 성공:', user.email);
+                showUserInfo(user);
+                updateDebugInfo();
+            }, 1000);
+        }
+        
+        // 로그아웃
+        function handleLogout() {
+            console.log('🔄 로그아웃...');
+            updateStatus('로그아웃 중...');
+            
+            // 로컬 스토리지에서 제거
+            localStorage.removeItem('moviesite_user');
+            
+            console.log('✅ 로그아웃 성공');
+            showLoginForm();
+            updateDebugInfo();
+        }
+        
+        // 로컬 스토리지 확인
+        function checkLocalStorage() {
+            const savedUser = localStorage.getItem('moviesite_user');
+            if (savedUser) {
+                try {
+                    const user = JSON.parse(savedUser);
+                    updateStatus('로컬 스토리지: 사용자 있음 (' + user.email + ')');
+                } catch (error) {
+                    updateStatus('로컬 스토리지: 데이터 손상됨');
+                }
+            } else {
+                updateStatus('로컬 스토리지: 사용자 없음');
+            }
+        }
+        
+        // 로컬 스토리지 초기화
+        function clearLocalStorage() {
+            localStorage.removeItem('moviesite_user');
+            updateStatus('로컬 스토리지 초기화됨');
+            showLoginForm();
+            updateDebugInfo();
+        }
+        
+        // 로그인 폼 표시
+        function showLoginForm() {
+            loginSection.classList.remove('hidden');
+            userSection.classList.add('hidden');
+            updateStatus('로그인되지 않음');
+        }
+        
+        // 사용자 정보 표시
+        function showUserInfo(user) {
+            loginSection.classList.add('hidden');
+            userSection.classList.remove('hidden');
+            userEmail.textContent = user.email;
+            updateStatus('로그인됨: ' + user.email);
+        }
+        
+        // 상태 업데이트
+        function updateStatus(message) {
+            status.textContent = message;
+            console.log('📊 상태:', message);
+        }
+        
+        // 디버그 정보 업데이트
+        function updateDebugInfo() {
+            currentUrl.textContent = window.location.href;
+            
+            const savedUser = localStorage.getItem('moviesite_user');
+            localStorageStatus.textContent = savedUser ? '사용자 있음' : '사용자 없음';
+        }
+    </script>
+</body>
+</html>

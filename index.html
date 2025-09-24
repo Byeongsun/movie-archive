@@ -23,7 +23,16 @@
                     <div id="user-info" class="user-info hidden" style="display: none;">
                         <img id="user-avatar" class="user-avatar" src="" alt="프로필">
                         <span id="user-name" class="user-name"></span>
-                        <button id="logout-btn" class="logout-btn">로그아웃</button>
+                        <div class="user-actions">
+                            <button id="data-export-btn" class="data-btn" onclick="exportUserData()" title="평점 데이터 다운로드">
+                                <i class="fas fa-download"></i>
+                            </button>
+                            <button id="data-import-btn" class="data-btn" onclick="document.getElementById('import-file').click()" title="평점 데이터 가져오기">
+                                <i class="fas fa-upload"></i>
+                            </button>
+                            <input type="file" id="import-file" accept=".json" style="display: none;" onchange="importUserData(this.files[0])">
+                            <button id="logout-btn" class="logout-btn">로그아웃</button>
+                        </div>
                     </div>
                     <button id="login-btn" class="login-btn" style="display: flex;">
                         <i class="fas fa-user"></i>
@@ -315,116 +324,9 @@
     <script src="supabase-config.js"></script>
     <script src="script.js"></script>
     
-    <!-- Supabase 초기화 확인 스크립트 -->
+    <!-- 초기화 스크립트 -->
     <script>
-        // 기본 JavaScript 작동 확인
-        alert('JavaScript 로딩됨!');
-        
-        // Supabase SDK 로딩 확인
-        alert('Supabase SDK 확인:\n' + 
-              'supabase 전역 객체: ' + (typeof supabase !== 'undefined') + '\n' +
-              'createClient: ' + (typeof supabase?.createClient !== 'undefined'));
-        
-        // Supabase 로딩 확인
-        window.addEventListener('load', function() {
-            alert('페이지 로드 완료!');
-            
-            // URL 파라미터 확인 (OAuth 리디렉션 후)
-            const urlParams = new URLSearchParams(window.location.search);
-            const fragment = new URLSearchParams(window.location.hash.substring(1));
-            
-            alert('URL 확인:\n' + 
-                  'search: ' + window.location.search + '\n' +
-                  'hash: ' + window.location.hash + '\n' +
-                  'access_token: ' + (fragment.get('access_token') ? '있음' : '없음'));
-            
-            // OAuth 토큰이 있으면 강제로 세션 새로고침
-            if (fragment.get('access_token')) {
-                alert('OAuth 토큰 발견! 세션 새로고침 시도...');
-                
-                // 로그인 모달 즉시 닫기
-                const loginModal = document.getElementById('login-modal');
-                if (loginModal) {
-                    loginModal.classList.add('hidden');
-                    alert('로그인 모달 강제로 닫음');
-                }
-                
-                // Supabase가 URL 해시를 처리하도록 강제
-                if (typeof supabaseClient !== 'undefined' && supabaseClient.auth) {
-                    // 토큰을 직접 설정
-                    const accessToken = fragment.get('access_token');
-                    const refreshToken = fragment.get('refresh_token');
-                    
-                    alert('토큰 정보:\naccess_token: ' + (accessToken ? '있음' : '없음') + 
-                          '\nrefresh_token: ' + (refreshToken ? '있음' : '없음'));
-                    
-                    // OAuth 토큰이 있으므로 로그인 성공으로 간주하고 UI 업데이트
-                    alert('OAuth 토큰 발견! 로그인 성공으로 처리합니다...');
-                    
-                    // URL에서 사용자 정보 추출 시도
-                    const userEmail = 'sunson0@gmail.com'; // 이전에 확인된 이메일
-                    
-                    alert('로그인 처리 시작: ' + userEmail);
-                    
-                    // UI 즉시 업데이트
-                    updateLoginUI(userEmail);
-                    
-                    // UI 업데이트 함수
-                    function updateLoginUI(userEmail) {
-                        alert('UI 업데이트 시작: ' + userEmail);
-                        
-                        // URL 해시 제거
-                        window.history.replaceState({}, document.title, window.location.pathname);
-                        
-                        // UI 요소들 직접 업데이트
-                        const loginBtn = document.getElementById('login-btn');
-                        const userInfo = document.getElementById('user-info');
-                        const userName = document.getElementById('user-name');
-                        const logoutBtn = document.getElementById('logout-btn');
-                        
-                        if (loginBtn) {
-                            loginBtn.style.display = 'none';
-                            alert('로그인 버튼 숨김');
-                        }
-                        if (userInfo) {
-                            userInfo.style.display = 'flex';
-                            alert('사용자 정보 표시');
-                        }
-                        if (userName) {
-                            userName.textContent = userEmail;
-                            alert('사용자 이름 설정: ' + userEmail);
-                        }
-                        if (logoutBtn) {
-                            logoutBtn.style.display = 'flex';
-                            alert('로그아웃 버튼 표시');
-                        }
-                    }
-                }
-            }
-            
-            console.log('Supabase 사용 가능:', typeof supabase !== 'undefined');
-            console.log('현재 도메인:', window.location.hostname);
-            
-            // 함수 존재 여부 확인
-            alert('handleGoogleLogin: ' + typeof handleGoogleLogin + '\nsignInWithGoogle: ' + typeof signInWithGoogle);
-            
-            // 구글 로그인 버튼에 직접 이벤트 리스너 추가
-            const googleBtn = document.getElementById('google-login-btn');
-            if (googleBtn) {
-                alert('구글 로그인 버튼 찾음!');
-                googleBtn.addEventListener('click', function(e) {
-                    alert('구글 로그인 버튼 클릭됨!');
-                    e.preventDefault();
-                    if (typeof handleGoogleLogin === 'function') {
-                        handleGoogleLogin();
-                    } else {
-                        alert('handleGoogleLogin 함수를 찾을 수 없음');
-                    }
-                });
-            } else {
-                alert('구글 로그인 버튼을 찾을 수 없음');
-            }
-        });
+        console.log('✅ Movie Archive 초기화 완료');
     </script>
 </body>
 </html>

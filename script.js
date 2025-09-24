@@ -608,15 +608,15 @@ window.hideLoginModal = hideLoginModal;
 // script.js 로딩 확인
 console.log('✅ script.js 파일 로딩됨');
 
-// Supabase 연동 함수들 (supabase-config.js에서 호출)
+// 로컬 스토리지 기반 로그인 함수들
 function handleGoogleLogin() {
-    alert('handleGoogleLogin 함수 호출됨!\nsignInWithGoogle: ' + typeof signInWithGoogle);
+    console.log('🔄 Google 로그인 버튼 클릭');
     
     if (typeof signInWithGoogle === 'function') {
-        alert('signInWithGoogle 함수 호출 시작!');
         signInWithGoogle();
     } else {
-        alert('signInWithGoogle 함수를 찾을 수 없음!\nSupabase가 아직 설정되지 않았습니다.');
+        console.error('❌ signInWithGoogle 함수를 찾을 수 없음');
+        alert('로그인 시스템이 아직 준비되지 않았습니다.');
     }
 }
 
@@ -1082,18 +1082,71 @@ function initializeFirstScreen() {
     
     // 배경 데이터 초기화
     clearResults();
-    clearUserData();
     
-    // 로그인 모달 자동 표시 (비밀번호 재설정이 아닌 경우)
+    // URL 파라미터 확인
     const urlParams = new URLSearchParams(window.location.search);
     const action = urlParams.get('action');
     
-    if (action !== 'reset-password') {
-        showLoginModal();
+    // 비밀번호 재설정이 아니고 로그인되지 않은 경우에만 로그인 모달 표시
+    if (action !== 'reset-password' && !currentUser) {
+        setTimeout(() => {
+            showLoginModal();
+        }, 500);
+    }
+}
+
+// 데이터 관리 함수들
+function exportUserData() {
+    console.log('📁 사용자 데이터 내보내기...');
+    
+    if (typeof ratingManager !== 'undefined' && ratingManager.exportData) {
+        ratingManager.exportData();
+    } else {
+        alert('데이터 내보내기 기능을 사용할 수 없습니다.');
+    }
+}
+
+function importUserData(file) {
+    console.log('📂 사용자 데이터 가져오기...');
+    
+    if (!file) {
+        alert('파일을 선택해주세요.');
+        return;
     }
     
-    // 기본 상태로 UI 설정
-    updateUIForLoggedOutUser();
+    if (file.type !== 'application/json') {
+        alert('JSON 파일만 업로드할 수 있습니다.');
+        return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const jsonData = e.target.result;
+            
+            if (typeof ratingManager !== 'undefined' && ratingManager.importData) {
+                const success = ratingManager.importData(jsonData);
+                
+                if (success) {
+                    alert('평점 데이터를 성공적으로 가져왔습니다!');
+                    
+                    // 평점 목록 새로고침
+                    if (typeof loadUserRatings === 'function') {
+                        loadUserRatings();
+                    }
+                } else {
+                    alert('데이터 가져오기에 실패했습니다. 파일 형식을 확인해주세요.');
+                }
+            } else {
+                alert('데이터 가져오기 기능을 사용할 수 없습니다.');
+            }
+        } catch (error) {
+            console.error('파일 읽기 실패:', error);
+            alert('파일을 읽는 중 오류가 발생했습니다.');
+        }
+    };
+    
+    reader.readAsText(file);
 }
 
 // URL 파라미터 확인 (비밀번호 재설정 등)
