@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>로그인 테스트</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .login-section {
+            margin-bottom: 20px;
+            padding: 20px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+        }
+        .user-info {
+            background: #e8f5e8;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        button {
+            background: #4285f4;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+        }
+        button:hover {
+            background: #3367d6;
+        }
+        .logout-btn {
+            background: #dc3545;
+        }
+        .logout-btn:hover {
+            background: #c82333;
+        }
+        .hidden {
+            display: none;
+        }
+        .status {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+            background: #f8f9fa;
+            border-left: 4px solid #007bff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎬 로그인 테스트</h1>
+        
+        <!-- 로그인 섹션 -->
+        <div id="login-section" class="login-section">
+            <h2>로그인</h2>
+            <button id="google-login-btn" onclick="handleGoogleLogin()">
+                🔐 Google로 로그인
+            </button>
+            <div id="status" class="status">로그인되지 않음</div>
+        </div>
+        
+        <!-- 사용자 정보 섹션 -->
+        <div id="user-section" class="user-info hidden">
+            <h2>사용자 정보</h2>
+            <p>이메일: <span id="user-email">-</span></p>
+            <button id="logout-btn" class="logout-btn" onclick="handleLogout()">
+                🚪 로그아웃
+            </button>
+        </div>
+        
+        <!-- 디버그 정보 -->
+        <div class="login-section">
+            <h3>디버그 정보</h3>
+            <p>현재 URL: <span id="current-url">-</span></p>
+            <p>Access Token: <span id="access-token-status">-</span></p>
+            <button onclick="checkSession()">세션 확인</button>
+            <button onclick="checkUser()">사용자 확인</button>
+        </div>
+    </div>
+
+    <!-- Supabase SDK -->
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    
+    <script>
+        // Supabase 설정
+        const supabaseConfig = {
+            url: 'https://nccssmpmwlsbrcwlfmpb.supabase.co',
+            anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5jY3NzbXBtd2xzYnJjd2xmbXBiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgzNDEyODQsImV4cCI6MjA3MzkxNzI4NH0.40t4kE6mZ8adWuVQ7wwtEEnKRVci6re18Am05LxKIec'
+        };
+        
+        // Supabase 클라이언트 초기화
+        const { createClient } = supabase;
+        const supabaseClient = createClient(supabaseConfig.url, supabaseConfig.anonKey);
+        
+        console.log('✅ Supabase 클라이언트 초기화 완료');
+        
+        // DOM 요소들
+        const loginSection = document.getElementById('login-section');
+        const userSection = document.getElementById('user-section');
+        const userEmail = document.getElementById('user-email');
+        const status = document.getElementById('status');
+        const currentUrl = document.getElementById('current-url');
+        const accessTokenStatus = document.getElementById('access-token-status');
+        
+        // 페이지 로드 시 초기화
+        window.addEventListener('load', function() {
+            console.log('📄 페이지 로드 완료');
+            updateDebugInfo();
+            checkForOAuthTokens();
+        });
+        
+        // 인증 상태 변경 리스너
+        supabaseClient.auth.onAuthStateChange(async (event, session) => {
+            console.log('🔐 인증 상태 변경:', event, session);
+            
+            if (session && session.user) {
+                console.log('✅ 로그인 성공:', session.user.email);
+                showUserInfo(session.user);
+            } else {
+                console.log('❌ 로그아웃');
+                showLoginForm();
+            }
+        });
+        
+        // Google 로그인
+        async function handleGoogleLogin() {
+            console.log('🔄 Google 로그인 시도...');
+            updateStatus('Google 로그인 중...');
+            
+            try {
+                const { data, error } = await supabaseClient.auth.signInWithOAuth({
+                    provider: 'google',
+                    options: {
+                        redirectTo: window.location.origin + '/login-test.html'
+                    }
+                });
+                
+                if (error) {
+                    console.error('❌ Google 로그인 실패:', error);
+                    updateStatus('로그인 실패: ' + error.message);
+                } else {
+                    console.log('✅ Google 로그인 리디렉션 시작');
+                    updateStatus('Google로 리디렉션 중...');
+                }
+            } catch (error) {
+                console.error('❌ Google 로그인 오류:', error);
+                updateStatus('로그인 오류: ' + error.message);
+            }
+        }
+        
+        // 로그아웃
+        async function handleLogout() {
+            console.log('🔄 로그아웃 시도...');
+            updateStatus('로그아웃 중...');
+            
+            try {
+                const { error } = await supabaseClient.auth.signOut();
+                if (error) {
+                    console.error('❌ 로그아웃 실패:', error);
+                    updateStatus('로그아웃 실패: ' + error.message);
+                } else {
+                    console.log('✅ 로그아웃 성공');
+                    showLoginForm();
+                }
+            } catch (error) {
+                console.error('❌ 로그아웃 오류:', error);
+                updateStatus('로그아웃 오류: ' + error.message);
+            }
+        }
+        
+        // OAuth 토큰 확인
+        function checkForOAuthTokens() {
+            const fragment = new URLSearchParams(window.location.hash.substring(1));
+            const accessToken = fragment.get('access_token');
+            
+            if (accessToken) {
+                console.log('🔍 OAuth 토큰 발견!');
+                updateStatus('OAuth 토큰 처리 중...');
+                
+                // URL 해시 제거
+                window.history.replaceState({}, document.title, window.location.pathname);
+                
+                // 세션 확인
+                setTimeout(checkSession, 1000);
+            }
+        }
+        
+        // 세션 확인
+        async function checkSession() {
+            console.log('🔍 세션 확인 중...');
+            updateStatus('세션 확인 중...');
+            
+            try {
+                const { data, error } = await supabaseClient.auth.getSession();
+                
+                if (error) {
+                    console.error('❌ 세션 확인 실패:', error);
+                    updateStatus('세션 확인 실패: ' + error.message);
+                } else if (data.session) {
+                    console.log('✅ 세션 발견:', data.session.user.email);
+                    showUserInfo(data.session.user);
+                } else {
+                    console.log('❌ 세션 없음');
+                    updateStatus('세션 없음');
+                }
+            } catch (error) {
+                console.error('❌ 세션 확인 오류:', error);
+                updateStatus('세션 확인 오류: ' + error.message);
+            }
+        }
+        
+        // 사용자 확인
+        async function checkUser() {
+            console.log('🔍 사용자 확인 중...');
+            updateStatus('사용자 확인 중...');
+            
+            try {
+                const { data, error } = await supabaseClient.auth.getUser();
+                
+                if (error) {
+                    console.error('❌ 사용자 확인 실패:', error);
+                    updateStatus('사용자 확인 실패: ' + error.message);
+                } else if (data.user) {
+                    console.log('✅ 사용자 발견:', data.user.email);
+                    showUserInfo(data.user);
+                } else {
+                    console.log('❌ 사용자 없음');
+                    updateStatus('사용자 없음');
+                }
+            } catch (error) {
+                console.error('❌ 사용자 확인 오류:', error);
+                updateStatus('사용자 확인 오류: ' + error.message);
+            }
+        }
+        
+        // 로그인 폼 표시
+        function showLoginForm() {
+            loginSection.classList.remove('hidden');
+            userSection.classList.add('hidden');
+            updateStatus('로그인되지 않음');
+        }
+        
+        // 사용자 정보 표시
+        function showUserInfo(user) {
+            loginSection.classList.add('hidden');
+            userSection.classList.remove('hidden');
+            userEmail.textContent = user.email;
+            updateStatus('로그인됨: ' + user.email);
+        }
+        
+        // 상태 업데이트
+        function updateStatus(message) {
+            status.textContent = message;
+            console.log('📊 상태:', message);
+        }
+        
+        // 디버그 정보 업데이트
+        function updateDebugInfo() {
+            currentUrl.textContent = window.location.href;
+            
+            const fragment = new URLSearchParams(window.location.hash.substring(1));
+            const accessToken = fragment.get('access_token');
+            accessTokenStatus.textContent = accessToken ? '있음' : '없음';
+        }
+    </script>
+</body>
+</html>
