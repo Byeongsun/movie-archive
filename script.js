@@ -180,7 +180,7 @@ function init() {
         });
     }
 
-    // 평가한 영화들 표시 (Firebase에서 로드)
+    // 평가한 영화들 표시 (Supabase에서 로드)
     displayRatedMovies();
     
     console.log('✅ 초기화 완료');
@@ -299,7 +299,7 @@ async function showMovieDetails(movieId) {
         const movie = await getMovieDetails(movieId);
         console.log('영화 정보 로드 완료:', movie.title);
         
-        // 사용자 평점 가져오기 (Firebase 연동)
+        // 사용자 평점 가져오기 (Supabase 연동)
         let userRating = 0;
         if (typeof getUserMovieRating === 'function') {
             userRating = await getUserMovieRating(movieId) || 0;
@@ -377,10 +377,10 @@ function setRating(movieId, rating) {
     ratingText.textContent = `${rating}/5`;
 }
 
-// 평점 저장 (Firebase 연동)
+// 평점 저장 (Supabase 연동)
 async function saveRating(movieId, title, posterPath, overview = '', releaseDate = '', voteAverage = 0) {
     // 로그인 확인
-    const user = auth.currentUser;
+    const user = await SupabaseUtils.getCurrentUser();
     if (!user) {
         alert('평점을 저장하려면 로그인이 필요합니다.');
         showLoginModal();
@@ -395,35 +395,41 @@ async function saveRating(movieId, title, posterPath, overview = '', releaseDate
         return;
     }
     
-    // Firebase에 저장
-    const movieData = {
-        id: movieId,
-        title: title,
-        poster_path: posterPath,
-        overview: overview,
-        release_date: releaseDate,
-        vote_average: voteAverage
-    };
-    
-    await saveMovieRating(user.uid, movieData, rating);
-    
-    // 로컬 스토리지에도 저장 (오프라인 지원용)
-    ratedMovies[movieId] = {
-        id: movieId,
-        title: title,
-        poster_path: posterPath,
-        rating: rating,
-        rated_at: new Date().toISOString()
-    };
-    localStorage.setItem('ratedMovies', JSON.stringify(ratedMovies));
-    
-    // 평가한 영화 목록 업데이트
-    if (user) {
-        loadUserRatings(user.uid);
+    try {
+        // Supabase에 저장
+        const movieData = {
+            id: movieId,
+            title: title,
+            poster_path: posterPath,
+            overview: overview,
+            release_date: releaseDate,
+            vote_average: voteAverage
+        };
+        
+        await saveMovieRating(user.id, movieData, rating);
+        
+        // 로컬 스토리지에도 저장 (오프라인 지원용)
+        ratedMovies[movieId] = {
+            id: movieId,
+            title: title,
+            poster_path: posterPath,
+            rating: rating,
+            rated_at: new Date().toISOString()
+        };
+        localStorage.setItem('ratedMovies', JSON.stringify(ratedMovies));
+        
+        // 평가한 영화 목록 업데이트
+        await loadUserRatings();
+        
+        // 모달 닫기
+        hideModal();
+        
+        alert('평점이 저장되었습니다!');
+        
+    } catch (error) {
+        console.error('평점 저장 오류:', error);
+        alert('평점 저장에 실패했습니다. 다시 시도해주세요.');
     }
-    
-    // 모달 닫기
-    hideModal();
 }
 
 // 평가한 영화들 표시
@@ -512,15 +518,15 @@ function hideLoginModal() {
     }
 }
 
-// Firebase에서 사용할 수 있도록 전역 함수로 설정
+// Supabase에서 사용할 수 있도록 전역 함수로 설정
 window.hideLoginModal = hideLoginModal;
 
-// Firebase 연동 함수들 (firebase-config.js에서 호출)
+// Supabase 연동 함수들 (supabase-config.js에서 호출)
 function handleGoogleLogin() {
     if (typeof signInWithGoogle === 'function') {
         signInWithGoogle();
     } else {
-        alert('Firebase가 아직 설정되지 않았습니다. firebase-config.js를 확인해주세요.');
+        alert('Supabase가 아직 설정되지 않았습니다. supabase-config.js를 확인해주세요.');
     }
 }
 
@@ -528,7 +534,7 @@ function handleLogout() {
     if (typeof signOut === 'function') {
         signOut();
     } else {
-        alert('Firebase가 아직 설정되지 않았습니다.');
+        alert('Supabase가 아직 설정되지 않았습니다.');
     }
 }
 
@@ -629,13 +635,13 @@ function handleEmailLogin() {
         return;
     }
     
-    // Firebase 함수 존재 여부 확인
+    // Supabase 함수 존재 여부 확인
     if (typeof signInWithEmail === 'function') {
         console.log('signInWithEmail 함수 호출...');
         signInWithEmail(email, password);
     } else {
         console.error('signInWithEmail 함수를 찾을 수 없습니다.');
-        alert('Firebase가 아직 설정되지 않았습니다. firebase-config.js를 확인해주세요.');
+        alert('Supabase가 아직 설정되지 않았습니다. supabase-config.js를 확인해주세요.');
     }
 }
 
@@ -658,17 +664,17 @@ function handleEmailSignup() {
         return;
     }
     
-    // Firebase 함수 존재 여부 확인
+    // Supabase 함수 존재 여부 확인
     if (typeof signUpWithEmail === 'function') {
         console.log('signUpWithEmail 함수 호출...');
         signUpWithEmail(name, email, password);
     } else {
         console.error('signUpWithEmail 함수를 찾을 수 없습니다.');
-        alert('Firebase가 아직 설정되지 않았습니다. firebase-config.js를 확인해주세요.');
+        alert('Supabase가 아직 설정되지 않았습니다. supabase-config.js를 확인해주세요.');
     }
 }
 
-// 이 함수는 firebase-config.js에서 사용하는 함수이므로 주석 처리
+// 이 함수는 supabase-config.js에서 사용하는 함수이므로 주석 처리
 // async function showMovieDetails(movieId) {
 //     try {
 //         showLoading();
@@ -688,14 +694,14 @@ function handleEmailSignup() {
 //     }
 // }
 
-// 별점 HTML 생성 함수 (firebase-config.js에서 사용)
+// 별점 HTML 생성 함수 (supabase-config.js에서 사용)
 function generateStarsHTML(rating) {
     return Array.from({length: 5}, (_, i) => {
         return `<i class="fas fa-star ${i < rating ? 'active' : ''}"></i>`;
     }).join('');
 }
 
-// showNotification 함수는 firebase-config.js에서만 정의됨
+// showNotification 함수는 supabase-config.js에서만 정의됨
 
 // 비밀번호 재설정 폼 표시
 function showPasswordResetForm() {
@@ -775,17 +781,17 @@ function handlePasswordReset() {
         return;
     }
     
-    // Firebase 함수 존재 여부 확인
+    // Supabase 함수 존재 여부 확인
     if (typeof sendPasswordReset === 'function') {
         console.log('sendPasswordReset 함수 호출...');
         sendPasswordReset(email);
     } else {
         console.error('sendPasswordReset 함수를 찾을 수 없습니다.');
-        alert('Firebase가 아직 설정되지 않았습니다.');
+        alert('Supabase가 아직 설정되지 않았습니다.');
     }
 }
 
-// Firebase 미설정 시 임시 로딩 함수
+// Supabase 미설정 시 임시 로딩 함수
 function showLoading(message = '로딩 중...') {
     const loading = document.getElementById('loading');
     if (loading) {
@@ -817,12 +823,12 @@ window.debugLogin = function() {
     console.log('- showLoginModal:', typeof window.showLoginModal);
     console.log('- hideLoginModal:', typeof window.hideLoginModal);
     
-    console.log('Firebase 상태:');
-    if (typeof firebase !== 'undefined') {
-        console.log('- Firebase apps:', firebase.apps.length);
-        console.log('- Auth:', firebase.auth());
+    console.log('Supabase 상태:');
+    if (typeof supabaseClient !== 'undefined') {
+        console.log('- Supabase 클라이언트:', !!supabaseClient);
+        console.log('- Auth:', !!supabaseClient.auth);
     } else {
-        console.log('- Firebase: 로드되지 않음');
+        console.log('- Supabase: 로드되지 않음');
     }
 };
 
