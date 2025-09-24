@@ -365,17 +365,40 @@
                     }).then(({ data, error }) => {
                         alert('세션 설정 결과:\n' + 
                               '세션: ' + (data.session ? '있음' : '없음') + '\n' +
+                              '사용자: ' + (data.session?.user?.email || '없음') + '\n' +
                               '에러: ' + (error ? error.message : '없음'));
                         
-                        if (data.session) {
+                        if (data.session && data.session.user) {
                             alert('로그인 성공! 사용자: ' + data.session.user.email);
+                            
                             // URL 해시 제거
                             window.history.replaceState({}, document.title, window.location.pathname);
                             
-                            // UI 강제 업데이트
-                            if (typeof updateUIForLoggedInUser === 'function') {
-                                updateUIForLoggedInUser(data.session.user);
+                            // UI 요소들 직접 업데이트
+                            const loginBtn = document.getElementById('login-btn');
+                            const userInfo = document.getElementById('user-info');
+                            const userName = document.getElementById('user-name');
+                            const logoutBtn = document.getElementById('logout-btn');
+                            
+                            if (loginBtn) {
+                                loginBtn.style.display = 'none';
+                                alert('로그인 버튼 숨김');
                             }
+                            if (userInfo) {
+                                userInfo.style.display = 'flex';
+                                alert('사용자 정보 표시');
+                            }
+                            if (userName) {
+                                userName.textContent = data.session.user.email;
+                                alert('사용자 이름 설정: ' + data.session.user.email);
+                            }
+                            if (logoutBtn) {
+                                logoutBtn.style.display = 'flex';
+                                alert('로그아웃 버튼 표시');
+                            }
+                            
+                        } else {
+                            alert('세션은 있지만 사용자 정보가 없습니다!');
                         }
                     }).catch(err => {
                         alert('세션 설정 오류: ' + err.message);
