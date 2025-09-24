@@ -7,6 +7,21 @@
     <link rel="stylesheet" href="styles.css">
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <!-- 초기 화면 강제 적용 -->
+    <style>
+        /* 초기 상태에서 섹션들 강제 숨김 */
+        #search-section,
+        #results-section,
+        #rated-movies-section {
+            display: none !important;
+        }
+        
+        /* 로그인 모달이 기본적으로 표시되도록 */
+        #login-modal {
+            display: flex !important;
+        }
+    </style>
 </head>
 <body>
     <!-- 헤더 -->
