@@ -176,6 +176,17 @@ async function signInWithGoogle() {
     alert('Google 로그인 시도 시작!');
     
     try {
+        // Supabase 클라이언트 존재 확인
+        alert('Supabase 클라이언트 확인:\n' + 
+              'supabase: ' + (typeof supabase !== 'undefined') + '\n' +
+              'supabaseClient: ' + (typeof supabaseClient !== 'undefined') + '\n' +
+              'auth: ' + (supabaseClient && typeof supabaseClient.auth !== 'undefined'));
+        
+        if (!supabaseClient || !supabaseClient.auth) {
+            alert('Supabase 클라이언트가 제대로 초기화되지 않았습니다!');
+            return;
+        }
+        
         alert('Supabase 클라이언트 상태 확인 중...');
         
         // Supabase 클라이언트 상태 확인

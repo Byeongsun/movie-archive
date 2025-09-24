@@ -319,7 +319,11 @@
     <script>
         // 기본 JavaScript 작동 확인
         alert('JavaScript 로딩됨!');
-        console.log('=== JavaScript 시작 ===');
+        
+        // Supabase SDK 로딩 확인
+        alert('Supabase SDK 확인:\n' + 
+              'supabase 전역 객체: ' + (typeof supabase !== 'undefined') + '\n' +
+              'createClient: ' + (typeof supabase?.createClient !== 'undefined'));
         
         // Supabase 로딩 확인
         window.addEventListener('load', function() {
