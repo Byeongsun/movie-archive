@@ -185,6 +185,15 @@ async function signInWithGoogle() {
             hideLoginModal();
         }
         
+        // 모든 섹션 표시
+        const searchSection = document.getElementById('search-section');
+        const resultsSection = document.getElementById('results-section');
+        const ratedMoviesSection = document.getElementById('rated-movies-section');
+        
+        if (searchSection) searchSection.style.display = 'block';
+        if (resultsSection) resultsSection.style.display = 'block';
+        if (ratedMoviesSection) ratedMoviesSection.style.display = 'block';
+        
         // 평점 로드
         if (typeof loadUserRatings === 'function') {
             loadUserRatings();
@@ -227,6 +236,15 @@ async function signInWithEmail(email, password) {
         if (typeof hideLoginModal === 'function') {
             hideLoginModal();
         }
+        
+        // 모든 섹션 표시
+        const searchSection = document.getElementById('search-section');
+        const resultsSection = document.getElementById('results-section');
+        const ratedMoviesSection = document.getElementById('rated-movies-section');
+        
+        if (searchSection) searchSection.style.display = 'block';
+        if (resultsSection) resultsSection.style.display = 'block';
+        if (ratedMoviesSection) ratedMoviesSection.style.display = 'block';
         
         if (typeof loadUserRatings === 'function') {
             loadUserRatings();
@@ -271,6 +289,15 @@ async function signUpWithEmail(name, email, password) {
             hideLoginModal();
         }
         
+        // 모든 섹션 표시
+        const searchSection = document.getElementById('search-section');
+        const resultsSection = document.getElementById('results-section');
+        const ratedMoviesSection = document.getElementById('rated-movies-section');
+        
+        if (searchSection) searchSection.style.display = 'block';
+        if (resultsSection) resultsSection.style.display = 'block';
+        if (ratedMoviesSection) ratedMoviesSection.style.display = 'block';
+        
         if (typeof loadUserRatings === 'function') {
             loadUserRatings();
         }
@@ -286,6 +313,15 @@ async function signOut() {
     
     console.log('✅ 로그아웃 성공');
     
+    // 모든 섹션 숨기기
+    const searchSection = document.getElementById('search-section');
+    const resultsSection = document.getElementById('results-section');
+    const ratedMoviesSection = document.getElementById('rated-movies-section');
+    
+    if (searchSection) searchSection.style.display = 'none';
+    if (resultsSection) resultsSection.style.display = 'none';
+    if (ratedMoviesSection) ratedMoviesSection.style.display = 'none';
+    
     // UI 업데이트
     if (typeof updateUIForLoggedOutUser === 'function') {
         updateUIForLoggedOutUser();
@@ -294,6 +330,13 @@ async function signOut() {
     if (typeof clearUserData === 'function') {
         clearUserData();
     }
+    
+    // 로그인 모달 표시
+    setTimeout(() => {
+        if (typeof showLoginModal === 'function') {
+            showLoginModal();
+        }
+    }, 100);
 }
 
 async function sendPasswordReset(email) {

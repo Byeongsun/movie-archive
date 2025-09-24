@@ -1080,8 +1080,18 @@ document.addEventListener('DOMContentLoaded', function() {
 function initializeFirstScreen() {
     console.log('🎬 첫 화면 초기화...');
     
-    // 배경 데이터 초기화
+    // 모든 섹션 숨기기
+    const searchSection = document.getElementById('search-section');
+    const resultsSection = document.getElementById('results-section');
+    const ratedMoviesSection = document.getElementById('rated-movies-section');
+    
+    if (searchSection) searchSection.style.display = 'none';
+    if (resultsSection) resultsSection.style.display = 'none';
+    if (ratedMoviesSection) ratedMoviesSection.style.display = 'none';
+    
+    // 배경 데이터 완전 초기화
     clearResults();
+    clearUserData();
     
     // URL 파라미터 확인
     const urlParams = new URLSearchParams(window.location.search);
@@ -1091,7 +1101,7 @@ function initializeFirstScreen() {
     if (action !== 'reset-password' && !currentUser) {
         setTimeout(() => {
             showLoginModal();
-        }, 500);
+        }, 100);
     }
 }
 
