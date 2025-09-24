@@ -187,11 +187,8 @@ async function signInWithGoogle() {
             return;
         }
         
-        alert('Supabase 클라이언트 상태 확인 중...');
-        
-        // Supabase 클라이언트 상태 확인
-        const { data: sessionData, error: sessionError } = await supabaseClient.auth.getSession();
-        alert('세션 확인 완료!\n에러: ' + (sessionError ? sessionError.message : '없음'));
+        // 세션 확인을 건너뛰고 바로 OAuth 시도
+        alert('세션 확인을 건너뛰고 바로 OAuth 호출합니다...');
         
         alert('OAuth 호출 시작...');
         
