@@ -1149,6 +1149,21 @@ function importUserData(file) {
     reader.readAsText(file);
 }
 
+// 키보드 이벤트 핸들러들
+function handleLoginKeyPress(event) {
+    if (event.key === 'Enter') {
+        event.preventDefault();
+        handleEmailLogin();
+    }
+}
+
+function handleSignupKeyPress(event) {
+    if (event.key === 'Enter') {
+        event.preventDefault();
+        handleEmailSignup();
+    }
+}
+
 // URL 파라미터 확인 (비밀번호 재설정 등)
 function checkUrlParams() {
     const urlParams = new URLSearchParams(window.location.search);

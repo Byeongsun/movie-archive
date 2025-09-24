@@ -198,7 +198,7 @@
                             <input type="email" id="email-input" placeholder="이메일 주소" required>
                         </div>
                         <div class="form-group">
-                            <input type="password" id="password-input" placeholder="비밀번호" required>
+                            <input type="password" id="password-input" placeholder="비밀번호" required onkeypress="handleLoginKeyPress(event)">
                         </div>
                         <button id="email-login-btn" class="email-login-btn" onclick="handleEmailLogin()">
                             <i class="fas fa-envelope"></i>
@@ -244,7 +244,7 @@
                             <input type="email" id="signup-email-input" placeholder="이메일 주소" required>
                         </div>
                         <div class="form-group">
-                            <input type="password" id="signup-password-input" placeholder="비밀번호 (6자 이상)" required>
+                            <input type="password" id="signup-password-input" placeholder="비밀번호 (6자 이상)" required onkeypress="handleSignupKeyPress(event)">
                         </div>
                         <button id="email-signup-btn" class="email-login-btn" onclick="handleEmailSignup()">
                             <i class="fas fa-user-plus"></i>
