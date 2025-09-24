@@ -174,7 +174,7 @@
                     <p class="login-subtitle">개인 평점을 저장하고 관리하세요</p>
                     
                     <!-- 구글 로그인 -->
-                    <button id="google-login-btn" class="social-login-btn google-btn" onclick="alert('버튼 클릭됨!'); handleGoogleLogin();">
+                    <button id="google-login-btn" class="social-login-btn google-btn" onclick="handleGoogleLogin();">
                         <i class="fab fa-google"></i>
                         Google로 로그인
                     </button>
@@ -321,6 +321,27 @@
         window.addEventListener('load', function() {
             console.log('Supabase 사용 가능:', typeof supabase !== 'undefined');
             console.log('현재 도메인:', window.location.hostname);
+            
+            // 함수 존재 여부 확인
+            console.log('handleGoogleLogin 함수:', typeof handleGoogleLogin);
+            console.log('signInWithGoogle 함수:', typeof signInWithGoogle);
+            
+            // 구글 로그인 버튼에 직접 이벤트 리스너 추가
+            const googleBtn = document.getElementById('google-login-btn');
+            if (googleBtn) {
+                console.log('구글 로그인 버튼 찾음');
+                googleBtn.addEventListener('click', function(e) {
+                    console.log('구글 로그인 버튼 클릭됨!');
+                    e.preventDefault();
+                    if (typeof handleGoogleLogin === 'function') {
+                        handleGoogleLogin();
+                    } else {
+                        console.error('handleGoogleLogin 함수를 찾을 수 없음');
+                    }
+                });
+            } else {
+                console.error('구글 로그인 버튼을 찾을 수 없음');
+            }
         });
     </script>
 </body>
