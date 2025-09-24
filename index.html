@@ -246,6 +246,37 @@
             </div>
         </div>
 
+        <!-- 비밀번호 변경 모달 -->
+        <div id="password-change-modal" class="modal hidden">
+            <div class="modal-content login-modal-content">
+                <span class="close-btn" id="close-password-change-modal" title="닫기">
+                    <i class="fas fa-times"></i>
+                </span>
+                <div class="login-container">
+                    <h2 class="login-title">
+                        <i class="fas fa-key"></i>
+                        비밀번호 변경
+                    </h2>
+                    <p class="login-subtitle">새로운 비밀번호를 입력해주세요</p>
+                    
+                    <form id="password-change-form" class="auth-form">
+                        <div class="input-group">
+                            <label for="new-password">새 비밀번호</label>
+                            <input type="password" id="new-password" name="new-password" required>
+                        </div>
+                        <div class="input-group">
+                            <label for="confirm-password">비밀번호 확인</label>
+                            <input type="password" id="confirm-password" name="confirm-password" required>
+                        </div>
+                        <button type="submit" id="change-password-btn" class="email-login-btn">
+                            <i class="fas fa-save"></i>
+                            비밀번호 변경
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
         <!-- 내 평점 섹션 -->
         <section id="my-ratings" class="my-ratings">
             <div class="container">

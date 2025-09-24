@@ -150,6 +150,21 @@ function attachEventListeners() {
         loginModal.addEventListener('click', handleModalClick);
         console.log('✅ 로그인 모달 배경 클릭 이벤트 리스너 연결됨');
     }
+    
+    // 비밀번호 변경 모달 이벤트 리스너
+    const passwordChangeForm = document.getElementById('password-change-form');
+    if (passwordChangeForm) {
+        passwordChangeForm.removeEventListener('submit', handlePasswordChange);
+        passwordChangeForm.addEventListener('submit', handlePasswordChange);
+        console.log('✅ 비밀번호 변경 폼 이벤트 리스너 연결됨');
+    }
+    
+    const closePasswordChangeModalBtn = document.getElementById('close-password-change-modal');
+    if (closePasswordChangeModalBtn) {
+        closePasswordChangeModalBtn.removeEventListener('click', hidePasswordChangeModal);
+        closePasswordChangeModalBtn.addEventListener('click', hidePasswordChangeModal);
+        console.log('✅ 비밀번호 변경 모달 닫기 버튼 이벤트 리스너 연결됨');
+    }
 }
 
 // 모달 배경 클릭 핸들러
@@ -607,6 +622,53 @@ function handleLogout() {
     }
 }
 
+// UI 상태 업데이트 함수들
+function updateUIForLoggedInUser(user) {
+    console.log('✅ 로그인 UI 업데이트:', user.email);
+    
+    // 로그인/로그아웃 버튼 상태 변경
+    const loginBtn = document.getElementById('login-btn');
+    const logoutBtn = document.getElementById('logout-btn');
+    
+    if (loginBtn) loginBtn.style.display = 'none';
+    if (logoutBtn) logoutBtn.style.display = 'flex';
+    
+    // 사용자 정보 표시 (선택사항)
+    const userInfo = document.getElementById('user-info');
+    if (userInfo) {
+        userInfo.textContent = `안녕하세요, ${user.email}님`;
+        userInfo.style.display = 'block';
+    }
+    
+    // 로그인 모달 닫기
+    hideLoginModal();
+    
+    // 사용자 평점 로드
+    if (typeof loadUserRatings === 'function') {
+        loadUserRatings();
+    }
+}
+
+function updateUIForLoggedOutUser() {
+    console.log('🔄 로그아웃 UI 업데이트');
+    
+    // 로그인/로그아웃 버튼 상태 변경
+    const loginBtn = document.getElementById('login-btn');
+    const logoutBtn = document.getElementById('logout-btn');
+    
+    if (loginBtn) loginBtn.style.display = 'flex';
+    if (logoutBtn) logoutBtn.style.display = 'none';
+    
+    // 사용자 정보 숨기기
+    const userInfo = document.getElementById('user-info');
+    if (userInfo) {
+        userInfo.style.display = 'none';
+    }
+    
+    // 사용자 데이터 초기화
+    clearUserData();
+}
+
 function resetAuthForms() {
     // 입력 필드 초기화
     const emailInput = document.getElementById('email-input');
@@ -1003,4 +1065,60 @@ window.reinitializeDOM = function() {
 };
 
 // 페이지 로드 시 초기화
-document.addEventListener('DOMContentLoaded', init);
+document.addEventListener('DOMContentLoaded', function() {
+    init();
+    checkUrlParams();
+});
+
+// URL 파라미터 확인 (비밀번호 재설정 등)
+function checkUrlParams() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const action = urlParams.get('action');
+    
+    if (action === 'reset-password') {
+        // 비밀번호 재설정 후 비밀번호 변경 모달 표시
+        showPasswordChangeModal();
+    }
+}
+
+// 비밀번호 변경 모달 표시
+function showPasswordChangeModal() {
+    // URL에서 action 파라미터 제거
+    const url = new URL(window.location);
+    url.searchParams.delete('action');
+    window.history.replaceState({}, document.title, url);
+    
+    // 비밀번호 변경 모달 표시
+    const modal = document.getElementById('password-change-modal');
+    if (modal) {
+        modal.classList.remove('hidden');
+    }
+}
+
+// 비밀번호 변경 폼 제출 처리
+function handlePasswordChange(event) {
+    event.preventDefault();
+    
+    const newPassword = document.getElementById('new-password').value;
+    const confirmPassword = document.getElementById('confirm-password').value;
+    
+    if (typeof changePassword === 'function') {
+        changePassword(newPassword, confirmPassword);
+    } else {
+        alert('비밀번호 변경 기능을 사용할 수 없습니다.');
+    }
+}
+
+// 비밀번호 변경 모달 닫기
+function hidePasswordChangeModal() {
+    const modal = document.getElementById('password-change-modal');
+    if (modal) {
+        modal.classList.add('hidden');
+    }
+    
+    // 폼 초기화
+    const form = document.getElementById('password-change-form');
+    if (form) {
+        form.reset();
+    }
+}

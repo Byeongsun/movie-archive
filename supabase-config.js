@@ -173,16 +173,9 @@ async function signInWithGoogle() {
     console.log('🔄 Google 로그인 시도...');
     
     try {
+        // 간단한 OAuth 호출로 시도
         const { data, error } = await supabaseClient.auth.signInWithOAuth({
-            provider: 'google',
-            options: {
-                redirectTo: window.location.origin,
-                scopes: 'https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile',
-                queryParams: {
-                    access_type: 'offline',
-                    prompt: 'consent'
-                }
-            }
+            provider: 'google'
         });
         
         if (error) {
@@ -319,7 +312,7 @@ async function sendPasswordReset(email) {
     
     try {
         const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
-            redirectTo: window.location.origin
+            redirectTo: `${window.location.origin}/?action=reset-password`
         });
         
         if (error) {
@@ -335,6 +328,48 @@ async function sendPasswordReset(email) {
     } catch (error) {
         console.error('비밀번호 재설정 오류:', error);
         alert('비밀번호 재설정 중 오류가 발생했습니다.');
+    }
+}
+
+// 비밀번호 변경 함수
+async function changePassword(newPassword, confirmPassword) {
+    console.log('🔄 비밀번호 변경 시도...');
+    
+    // 비밀번호 확인
+    if (newPassword !== confirmPassword) {
+        alert('비밀번호가 일치하지 않습니다.');
+        return;
+    }
+    
+    // 비밀번호 길이 확인
+    if (newPassword.length < 6) {
+        alert('비밀번호는 최소 6자 이상이어야 합니다.');
+        return;
+    }
+    
+    try {
+        const { data, error } = await supabaseClient.auth.updateUser({
+            password: newPassword
+        });
+        
+        if (error) {
+            console.error('비밀번호 변경 실패:', error);
+            alert('비밀번호 변경에 실패했습니다: ' + error.message);
+            return;
+        }
+        
+        console.log('✅ 비밀번호 변경 성공');
+        alert('비밀번호가 성공적으로 변경되었습니다.');
+        
+        // 비밀번호 변경 모달 닫기
+        const modal = document.getElementById('password-change-modal');
+        if (modal) {
+            modal.classList.add('hidden');
+        }
+        
+    } catch (error) {
+        console.error('비밀번호 변경 오류:', error);
+        alert('비밀번호 변경 중 오류가 발생했습니다.');
     }
 }
 
