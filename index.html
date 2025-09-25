@@ -21,6 +21,18 @@
         #login-modal {
             display: flex !important;
         }
+        
+        /* 로그인된 상태에서는 모달 숨김 */
+        body.logged-in #login-modal {
+            display: none !important;
+        }
+        
+        /* 로그인된 상태에서는 섹션들 표시 */
+        body.logged-in #search-section,
+        body.logged-in #results-section,
+        body.logged-in #rated-movies-section {
+            display: block !important;
+        }
     </style>
 </head>
 <body>
