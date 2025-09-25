@@ -36,14 +36,22 @@ class RatingManager {
     }
 
     saveRating(movieId, rating) {
-        if (!currentUser) return false;
+        console.log('🔄 RatingManager.saveRating 호출:', { movieId, rating, currentUser: currentUser?.id });
+        
+        if (!currentUser) {
+            console.error('❌ currentUser가 없음');
+            return false;
+        }
         
         this.ratings[movieId] = {
             userId: currentUser.id,
             rating: rating,
             timestamp: new Date().toISOString()
         };
+        
+        console.log('💾 평점 데이터 저장:', this.ratings[movieId]);
         this.saveRatings();
+        console.log('✅ 평점 저장 완료');
         return true;
     }
 
@@ -296,8 +304,21 @@ function checkExistingLogin() {
 
 // 평점 관련 함수들
 function saveMovieRating(movieId, rating) {
-    if (!ratingManager) return false;
-    return ratingManager.saveRating(movieId, rating);
+    console.log('🔄 평점 저장 시도:', { movieId, rating });
+    
+    if (!ratingManager) {
+        console.error('❌ ratingManager가 초기화되지 않음');
+        return false;
+    }
+    
+    if (!currentUser) {
+        console.error('❌ 로그인이 필요함');
+        return false;
+    }
+    
+    const result = ratingManager.saveRating(movieId, rating);
+    console.log('✅ 평점 저장 결과:', result);
+    return result;
 }
 
 function getUserMovieRating(movieId) {

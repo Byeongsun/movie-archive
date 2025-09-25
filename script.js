@@ -441,7 +441,7 @@ async function saveRating(movieId, title, posterPath, overview = '', releaseDate
             vote_average: voteAverage
         };
         
-        await saveMovieRating(user.id, movieData, rating);
+        await saveMovieRating(movieId, rating);
         
         // 로컬 스토리지에도 저장 (오프라인 지원용)
         ratedMovies[movieId] = {
