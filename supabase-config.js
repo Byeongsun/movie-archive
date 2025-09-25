@@ -372,6 +372,21 @@ async function signOut() {
     if (resultsSection) resultsSection.style.display = 'none';
     if (ratedMoviesSection) ratedMoviesSection.style.display = 'none';
     
+    // body에서 logged-in 클래스 제거
+    document.body.classList.remove('logged-in');
+    console.log('✅ body에서 logged-in 클래스 제거');
+    
+    // 로그인 모달 다시 표시
+    const loginModal = document.getElementById('login-modal');
+    if (loginModal) {
+        console.log('🔄 로그인 모달 다시 표시...');
+        loginModal.style.display = 'flex';
+        loginModal.style.visibility = 'visible';
+        loginModal.style.opacity = '1';
+        loginModal.classList.remove('hidden');
+        console.log('✅ 로그인 모달 표시 완료');
+    }
+    
     // UI 업데이트
     if (typeof updateUIForLoggedOutUser === 'function') {
         updateUIForLoggedOutUser();
@@ -380,13 +395,6 @@ async function signOut() {
     if (typeof clearUserData === 'function') {
         clearUserData();
     }
-    
-    // 로그인 모달 표시
-    setTimeout(() => {
-        if (typeof showLoginModal === 'function') {
-            showLoginModal();
-        }
-    }, 100);
 }
 
 async function sendPasswordReset(email) {
