@@ -161,8 +161,8 @@ async function signInWithGoogle() {
     console.log('🔄 Google 로그인 시뮬레이션...');
     alert('signInWithGoogle 함수가 호출되었습니다!');
     
-    // 로그인 시뮬레이션 (1초 지연)
-    setTimeout(() => {
+    try {
+        // 로그인 시뮬레이션 (즉시 실행)
         const user = {
             email: 'sunson0@gmail.com',
             name: 'Test User',
@@ -170,20 +170,29 @@ async function signInWithGoogle() {
             loginTime: new Date().toISOString()
         };
         
+        console.log('👤 사용자 객체 생성:', user);
+        
         // 로컬 스토리지에 저장
         localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
         currentUser = user;
         
+        console.log('💾 로컬 스토리지 저장 완료');
         console.log('✅ 로그인 성공:', user.email);
         
         // UI 업데이트
         if (typeof updateUIForLoggedInUser === 'function') {
+            console.log('🔄 UI 업데이트 시작...');
             updateUIForLoggedInUser(user);
+        } else {
+            console.error('❌ updateUIForLoggedInUser 함수를 찾을 수 없음');
         }
         
         // 로그인 모달 닫기
         if (typeof hideLoginModal === 'function') {
+            console.log('🔄 로그인 모달 닫기...');
             hideLoginModal();
+        } else {
+            console.error('❌ hideLoginModal 함수를 찾을 수 없음');
         }
         
         // 모든 섹션 표시
@@ -191,15 +200,35 @@ async function signInWithGoogle() {
         const resultsSection = document.getElementById('results-section');
         const ratedMoviesSection = document.getElementById('rated-movies-section');
         
-        if (searchSection) searchSection.style.display = 'block';
-        if (resultsSection) resultsSection.style.display = 'block';
-        if (ratedMoviesSection) ratedMoviesSection.style.display = 'block';
+        if (searchSection) {
+            searchSection.style.display = 'block';
+            console.log('✅ 검색 섹션 표시');
+        }
+        if (resultsSection) {
+            resultsSection.style.display = 'block';
+            console.log('✅ 결과 섹션 표시');
+        }
+        if (ratedMoviesSection) {
+            ratedMoviesSection.style.display = 'block';
+            console.log('✅ 평점 섹션 표시');
+        }
+        
+        // body에 logged-in 클래스 추가
+        document.body.classList.add('logged-in');
+        console.log('✅ body에 logged-in 클래스 추가');
         
         // 평점 로드
         if (typeof loadUserRatings === 'function') {
+            console.log('🔄 사용자 평점 로드...');
             loadUserRatings();
         }
-    }, 1000);
+        
+        alert('로그인이 완료되었습니다!');
+        
+    } catch (error) {
+        console.error('❌ 로그인 중 오류 발생:', error);
+        alert('로그인 중 오류가 발생했습니다: ' + error.message);
+    }
 }
 
 async function signInWithEmail(email, password) {
