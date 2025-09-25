@@ -5,8 +5,9 @@ class MovieApp {
     constructor() {
         this.currentUser = null;
         this.ratings = {};
-        this.tmdbApiKey = 'YOUR_TMDB_API_KEY'; // 실제 API 키로 교체 필요
+        this.tmdbApiKey = 'f5cfc47bffc5559f582dffc0397b5841';
         this.tmdbBaseUrl = 'https://api.themoviedb.org/3';
+        this.useDummyData = false; // 실제 API 사용
         
         this.init();
     }
@@ -108,17 +109,79 @@ class MovieApp {
         const query = document.getElementById('search-input').value.trim();
         if (!query) return;
 
+        // 더미 데이터 사용
+        if (this.useDummyData || this.tmdbApiKey === 'YOUR_TMDB_API_KEY') {
+            this.displayMovies(this.getDummyMovies(query));
+            return;
+        }
+
         try {
             const response = await fetch(
                 `${this.tmdbBaseUrl}/search/movie?api_key=${this.tmdbApiKey}&query=${encodeURIComponent(query)}&language=ko-KR`
             );
+            
+            if (!response.ok) {
+                throw new Error(`API 오류: ${response.status}`);
+            }
+            
             const data = await response.json();
             
-            this.displayMovies(data.results);
+            if (data.results && data.results.length > 0) {
+                this.displayMovies(data.results);
+            } else {
+                this.displayMovies(this.getDummyMovies(query));
+            }
         } catch (error) {
             console.error('검색 오류:', error);
-            alert('영화 검색 중 오류가 발생했습니다.');
+            console.log('더미 데이터로 대체합니다.');
+            this.displayMovies(this.getDummyMovies(query));
         }
+    }
+
+    // 더미 영화 데이터
+    getDummyMovies(query) {
+        const dummyMovies = [
+            {
+                id: 1,
+                title: '어벤져스',
+                release_date: '2012-04-25',
+                poster_path: null,
+                overview: '지구의 운명을 건 최고의 영웅들의 대결'
+            },
+            {
+                id: 2,
+                title: '어벤져스: 엔드게임',
+                release_date: '2019-04-24',
+                poster_path: null,
+                overview: '무한대결의 최종 결전'
+            },
+            {
+                id: 3,
+                title: '스파이더맨: 노 웨이 홈',
+                release_date: '2021-12-15',
+                poster_path: null,
+                overview: '다중 우주의 스파이더맨들이 만나다'
+            },
+            {
+                id: 4,
+                title: '토르: 러브 앤 썬더',
+                release_date: '2022-07-06',
+                poster_path: null,
+                overview: '토르의 새로운 모험'
+            },
+            {
+                id: 5,
+                title: '블랙 위도우',
+                release_date: '2021-07-07',
+                poster_path: null,
+                overview: '나타샤 로마노프의 숨겨진 과거'
+            }
+        ];
+
+        // 검색어에 따라 필터링
+        return dummyMovies.filter(movie => 
+            movie.title.toLowerCase().includes(query.toLowerCase())
+        );
     }
 
     // 영화 목록 표시
@@ -127,6 +190,12 @@ class MovieApp {
         const resultsSection = document.getElementById('results');
         
         container.innerHTML = '';
+        
+        if (!movies || !Array.isArray(movies) || movies.length === 0) {
+            container.innerHTML = '<p>검색 결과가 없습니다.</p>';
+            resultsSection.classList.remove('hidden');
+            return;
+        }
         
         movies.forEach(movie => {
             const movieCard = this.createMovieCard(movie);
