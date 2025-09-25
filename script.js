@@ -605,25 +605,17 @@ function hideLoginModal() {
 // Supabase에서 사용할 수 있도록 전역 함수로 설정
 window.hideLoginModal = hideLoginModal;
 
-// script.js 로딩 확인
-console.log('✅ script.js 파일 로딩됨');
 
 // 로그인 핸들러 함수들
 function handleGoogleLogin() {
-    console.log('🔄 Google 로그인 버튼 클릭');
-    
     if (typeof signInWithGoogle === 'function') {
         signInWithGoogle();
-    } else {
-        console.error('❌ signInWithGoogle 함수를 찾을 수 없음');
-        alert('로그인 시스템이 준비되지 않았습니다.');
     }
 }
 
 
 // UI 상태 업데이트 함수들
 function updateUIForLoggedInUser(user) {
-    console.log('✅ 로그인 UI 업데이트:', user.email);
     
     // 로그인/로그아웃 버튼 상태 변경
     const loginBtn = document.getElementById('login-btn');
@@ -752,8 +744,6 @@ function toggleAuthMode() {
 }
 
 function handleEmailLogin() {
-    console.log('🔄 이메일 로그인 버튼 클릭');
-    
     const email = document.getElementById('email-input')?.value.trim();
     const password = document.getElementById('password-input')?.value.trim();
     
@@ -764,9 +754,6 @@ function handleEmailLogin() {
     
     if (typeof signInWithEmail === 'function') {
         signInWithEmail(email, password);
-    } else {
-        console.error('signInWithEmail 함수를 찾을 수 없습니다.');
-        alert('Supabase가 아직 설정되지 않았습니다. supabase-config.js를 확인해주세요.');
     }
 }
 
