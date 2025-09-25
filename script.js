@@ -620,13 +620,6 @@ function handleGoogleLogin() {
     }
 }
 
-function handleLogout() {
-    if (typeof signOut === 'function') {
-        signOut();
-    } else {
-        alert('Supabase가 아직 설정되지 않았습니다.');
-    }
-}
 
 // UI 상태 업데이트 함수들
 function updateUIForLoggedInUser(user) {

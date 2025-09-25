@@ -121,18 +121,31 @@ function updateAuthUI(isLoggedIn, user = null) {
     const loginBtn = document.getElementById('login-btn');
     const userInfo = document.getElementById('user-info');
     const userName = document.getElementById('user-name');
+    const logoutBtn = document.getElementById('logout-btn');
     
     if (isLoggedIn && user) {
         // 로그인된 상태
         if (loginBtn) loginBtn.style.display = 'none';
         if (userInfo) userInfo.style.display = 'flex';
         if (userName) userName.textContent = user.name || user.email;
+        
+        // 로그아웃 버튼 이벤트 리스너 연결
+        if (logoutBtn && !logoutBtn.hasAttribute('data-listener-added')) {
+            logoutBtn.addEventListener('click', function() {
+                console.log('🔄 로그아웃 버튼 클릭');
+                signOut();
+            });
+            logoutBtn.setAttribute('data-listener-added', 'true');
+        }
+        
         document.body.classList.add('logged-in');
+        console.log('✅ 로그인 UI 업데이트 완료');
     } else {
         // 로그아웃된 상태
         if (loginBtn) loginBtn.style.display = 'flex';
         if (userInfo) userInfo.style.display = 'none';
         document.body.classList.remove('logged-in');
+        console.log('✅ 로그아웃 UI 업데이트 완료');
     }
 }
 
