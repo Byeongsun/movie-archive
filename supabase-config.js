@@ -159,6 +159,7 @@ const SupabaseUtils = {
 // 로컬 스토리지 기반 인증 함수들
 async function signInWithGoogle() {
     console.log('🔄 Google 로그인 시뮬레이션...');
+    alert('signInWithGoogle 함수가 호출되었습니다!');
     
     // 로그인 시뮬레이션 (1초 지연)
     setTimeout(() => {
@@ -495,3 +496,11 @@ window.updateUIForLoggedInUser = updateUIForLoggedInUser;
 window.updateUIForLoggedOutUser = updateUIForLoggedOutUser;
 window.clearUserData = clearUserData;
 window.ratingManager = ratingManager;
+
+// 파일 로딩 확인
+console.log('✅ supabase-config.js 파일이 완전히 로드되었습니다!');
+console.log('전역 함수들:', {
+    signInWithGoogle: typeof window.signInWithGoogle,
+    signInWithEmail: typeof window.signInWithEmail,
+    signOut: typeof window.signOut
+});
