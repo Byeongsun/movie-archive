@@ -187,12 +187,14 @@ async function signInWithGoogle() {
             console.error('❌ updateUIForLoggedInUser 함수를 찾을 수 없음');
         }
         
-        // 로그인 모달 닫기
-        if (typeof hideLoginModal === 'function') {
+        // 로그인 모달 닫기 (직접 처리)
+        const loginModal = document.getElementById('login-modal');
+        if (loginModal) {
             console.log('🔄 로그인 모달 닫기...');
-            hideLoginModal();
+            loginModal.style.display = 'none';
+            console.log('✅ 로그인 모달 숨김 완료');
         } else {
-            console.error('❌ hideLoginModal 함수를 찾을 수 없음');
+            console.error('❌ 로그인 모달 요소를 찾을 수 없음');
         }
         
         // 모든 섹션 표시
