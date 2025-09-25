@@ -3,331 +3,66 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>나만의 영화 평점 아카이브</title>
-    <link rel="stylesheet" href="styles.css">
+    <title>Movie Archive</title>
+    <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    
 </head>
 <body>
-    <!-- 헤더 -->
-    <header class="header">
-        <div class="container">
-            <h1 class="logo">
-                <i class="fas fa-film"></i>
-                Movie Archive
-            </h1>
-            <nav class="nav">
-                <a href="#search-section">검색</a>
-                <a href="#my-ratings">내 평점</a>
-                <div id="auth-section" class="auth-section">
-                    <div id="user-info" class="user-info hidden" style="display: none;">
-                        <img id="user-avatar" class="user-avatar" src="" alt="프로필">
-                        <span id="user-name" class="user-name"></span>
-                        <div class="user-actions">
-                            <button id="data-export-btn" class="data-btn" onclick="exportUserData()" title="평점 데이터 다운로드">
-                                <i class="fas fa-download"></i>
-                            </button>
-                            <button id="data-import-btn" class="data-btn" onclick="document.getElementById('import-file').click()" title="평점 데이터 가져오기">
-                                <i class="fas fa-upload"></i>
-                            </button>
-                            <input type="file" id="import-file" accept=".json" style="display: none;" onchange="importUserData(this.files[0])">
-                            <button id="logout-btn" class="logout-btn">로그아웃</button>
-                        </div>
-                    </div>
-                    <button id="login-btn" class="login-btn" style="display: flex;">
-                        <i class="fas fa-user"></i>
-                        로그인
-                    </button>
-                </div>
-            </nav>
+    <!-- 로그인 모달 -->
+    <div id="login-modal" class="modal">
+        <div class="modal-content">
+            <h2><i class="fas fa-film"></i> Movie Archive</h2>
+            <p>영화 평점을 관리하세요</p>
+            
+            <button id="google-login" class="btn btn-google">
+                <i class="fab fa-google"></i> Google로 로그인
+            </button>
+            
+            <div class="divider">또는</div>
+            
+            <form id="email-form">
+                <input type="email" id="email" placeholder="이메일" required>
+                <input type="password" id="password" placeholder="비밀번호" required>
+                <button type="submit" class="btn btn-primary">로그인</button>
+            </form>
         </div>
-    </header>
+    </div>
 
-    <!-- 메인 컨테이너 -->
-    <main class="main-container">
+    <!-- 메인 앱 -->
+    <div id="main-app" class="hidden">
+        <!-- 헤더 -->
+        <header class="header">
+            <h1><i class="fas fa-film"></i> Movie Archive</h1>
+            <div class="user-info">
+                <span id="user-name"></span>
+                <button id="logout-btn" class="btn btn-small">로그아웃</button>
+            </div>
+        </header>
+
         <!-- 검색 섹션 -->
-        <section id="search-section" class="search-section">
-            <div class="container">
-                <h2>영화 검색</h2>
-                <div class="search-box">
-                    <input 
-                        type="text" 
-                        id="search-input" 
-                        placeholder="영화 제목을 입력하세요..."
-                        autocomplete="off"
-                    >
-                    <button id="search-btn" type="button">
-                        <i class="fas fa-search"></i>
-                        검색
-                    </button>
-                </div>
-                
-                <!-- 고급 검색 필터 -->
-                <div class="search-filters">
-                    <button id="toggle-filters" class="filter-toggle">
-                        <i class="fas fa-filter"></i>
-                        고급 필터
-                    </button>
-                    
-                    <div id="filter-panel" class="filter-panel hidden">
-                        <div class="filter-row">
-                            <div class="filter-group">
-                                <label for="genre-filter">장르</label>
-                                <select id="genre-filter">
-                                    <option value="">모든 장르</option>
-                                    <option value="28">액션</option>
-                                    <option value="12">모험</option>
-                                    <option value="16">애니메이션</option>
-                                    <option value="35">코미디</option>
-                                    <option value="80">범죄</option>
-                                    <option value="99">다큐멘터리</option>
-                                    <option value="18">드라마</option>
-                                    <option value="10751">가족</option>
-                                    <option value="14">판타지</option>
-                                    <option value="36">역사</option>
-                                    <option value="27">공포</option>
-                                    <option value="10402">음악</option>
-                                    <option value="9648">미스터리</option>
-                                    <option value="10749">로맨스</option>
-                                    <option value="878">SF</option>
-                                    <option value="10770">TV 영화</option>
-                                    <option value="53">스릴러</option>
-                                    <option value="10752">전쟁</option>
-                                    <option value="37">서부</option>
-                                </select>
-                            </div>
-                            
-                            <div class="filter-group">
-                                <label for="year-filter">연도</label>
-                                <select id="year-filter">
-                                    <option value="">모든 연도</option>
-                                    <option value="2024">2024</option>
-                                    <option value="2023">2023</option>
-                                    <option value="2022">2022</option>
-                                    <option value="2021">2021</option>
-                                    <option value="2020">2020</option>
-                                    <option value="2019">2019</option>
-                                    <option value="2018">2018</option>
-                                    <option value="2017">2017</option>
-                                    <option value="2016">2016</option>
-                                    <option value="2015">2015</option>
-                                </select>
-                            </div>
-                            
-                            <div class="filter-group">
-                                <label for="sort-filter">정렬</label>
-                                <select id="sort-filter">
-                                    <option value="popularity.desc">인기순</option>
-                                    <option value="release_date.desc">최신순</option>
-                                    <option value="release_date.asc">오래된순</option>
-                                    <option value="vote_average.desc">평점 높은순</option>
-                                    <option value="vote_average.asc">평점 낮은순</option>
-                                    <option value="title.asc">제목순 (A-Z)</option>
-                                </select>
-                            </div>
-                        </div>
-                        
-                        <div class="filter-actions">
-                            <button id="apply-filters" class="apply-btn">
-                                <i class="fas fa-check"></i>
-                                필터 적용
-                            </button>
-                            <button id="reset-filters" class="reset-btn">
-                                <i class="fas fa-undo"></i>
-                                초기화
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- 로딩 스피너 -->
-                <div id="loading" class="loading hidden">
-                    <i class="fas fa-spinner fa-spin"></i>
-                    검색 중...
-                </div>
+        <section class="search-section">
+            <div class="search-box">
+                <input type="text" id="search-input" placeholder="영화 제목을 검색하세요...">
+                <button id="search-btn" class="btn btn-primary">
+                    <i class="fas fa-search"></i>
+                </button>
             </div>
         </section>
 
-        <!-- 검색 결과 섹션 -->
-        <section id="search-results" class="search-results">
-            <div class="container">
-                <div id="results-container" class="results-container">
-                    <!-- 검색 결과가 여기에 동적으로 추가됩니다 -->
-                </div>
-            </div>
+        <!-- 결과 섹션 -->
+        <section id="results" class="results-section hidden">
+            <h3>검색 결과</h3>
+            <div id="movies-grid" class="movies-grid"></div>
         </section>
-
-        <!-- 영화 상세 정보 모달 -->
-        <div id="movie-modal" class="modal hidden">
-            <div class="modal-content">
-                <span class="close-btn" id="close-modal" title="닫기">
-                    <i class="fas fa-times"></i>
-                </span>
-                <div id="movie-details" class="movie-details">
-                    <!-- 영화 상세 정보가 여기에 동적으로 추가됩니다 -->
-                </div>
-            </div>
-        </div>
-
-        <!-- 로그인 모달 -->
-        <div id="login-modal" class="modal hidden">
-            <div class="modal-content login-modal-content">
-                <span class="close-btn" id="close-login-modal" title="닫기">
-                    <i class="fas fa-times"></i>
-                </span>
-                <div class="login-container">
-                    <h2 class="login-title">
-                        <i class="fas fa-film"></i>
-                        Movie Archive 로그인
-                    </h2>
-                    <p class="login-subtitle">개인 평점을 저장하고 관리하세요</p>
-                    
-                    <!-- 구글 로그인 -->
-                    <button id="google-login-btn" class="social-login-btn google-btn" onclick="handleGoogleLogin();">
-                        <i class="fab fa-google"></i>
-                        Google로 로그인
-                    </button>
-                    
-                    <div class="divider">
-                        <span>또는</span>
-                    </div>
-                    
-                    <!-- 이메일 로그인 폼 -->
-                    <div id="email-login-form" class="email-form">
-                        <div class="form-group">
-                            <input type="email" id="email-input" placeholder="이메일 주소" required>
-                        </div>
-                        <div class="form-group">
-                            <input type="password" id="password-input" placeholder="비밀번호" required onkeypress="handleLoginKeyPress(event)">
-                        </div>
-                        <button id="email-login-btn" class="email-login-btn" onclick="handleEmailLogin()">
-                            <i class="fas fa-envelope"></i>
-                            이메일로 로그인
-                        </button>
-                        
-                        <div class="forgot-password">
-                            <button id="forgot-password-btn" class="forgot-password-btn" onclick="showPasswordResetForm()">
-                                비밀번호를 잊으셨나요?
-                            </button>
-                        </div>
-                    </div>
-                    
-                    <div class="auth-switch">
-                        <p id="auth-switch-text">계정이 없으신가요? 
-                            <button id="switch-to-signup" class="switch-btn">회원가입</button>
-                        </p>
-                    </div>
-                    
-                    <!-- 비밀번호 재설정 폼 (숨김 상태) -->
-                    <div id="password-reset-form" class="email-form hidden">
-                        <h3 class="reset-title">비밀번호 재설정</h3>
-                        <p class="reset-description">가입하신 이메일 주소를 입력하시면 비밀번호 재설정 링크를 보내드립니다.</p>
-                        <div class="form-group">
-                            <input type="email" id="reset-email-input" placeholder="이메일 주소" required>
-                        </div>
-                        <button id="send-reset-btn" class="email-login-btn" onclick="handlePasswordReset()">
-                            <i class="fas fa-paper-plane"></i>
-                            재설정 이메일 발송
-                        </button>
-                        <button id="back-to-login-btn" class="back-btn" onclick="hidePasswordResetForm()">
-                            <i class="fas fa-arrow-left"></i>
-                            로그인으로 돌아가기
-                        </button>
-                    </div>
-                    
-                    <!-- 회원가입 폼 (숨김 상태) -->
-                    <div id="email-signup-form" class="email-form hidden">
-                        <div class="form-group">
-                            <input type="text" id="signup-name-input" placeholder="이름" required>
-                        </div>
-                        <div class="form-group">
-                            <input type="email" id="signup-email-input" placeholder="이메일 주소" required>
-                        </div>
-                        <div class="form-group">
-                            <input type="password" id="signup-password-input" placeholder="비밀번호 (6자 이상)" required onkeypress="handleSignupKeyPress(event)">
-                        </div>
-                        <button id="email-signup-btn" class="email-login-btn" onclick="handleEmailSignup()">
-                            <i class="fas fa-user-plus"></i>
-                            계정 만들기
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- 비밀번호 변경 모달 -->
-        <div id="password-change-modal" class="modal hidden">
-            <div class="modal-content login-modal-content">
-                <span class="close-btn" id="close-password-change-modal" title="닫기">
-                    <i class="fas fa-times"></i>
-                </span>
-                <div class="login-container">
-                    <h2 class="login-title">
-                        <i class="fas fa-key"></i>
-                        비밀번호 변경
-                    </h2>
-                    <p class="login-subtitle">새로운 비밀번호를 입력해주세요 (최소 6자 이상)</p>
-                    
-                    <form id="password-change-form" class="auth-form">
-                        <div class="input-group">
-                            <label for="new-password">
-                                <i class="fas fa-lock"></i>
-                                새 비밀번호
-                            </label>
-                            <input type="password" id="new-password" name="new-password" required 
-                                   minlength="6" placeholder="최소 6자 이상 입력">
-                        </div>
-                        <div class="input-group">
-                            <label for="confirm-password">
-                                <i class="fas fa-lock"></i>
-                                비밀번호 확인
-                            </label>
-                            <input type="password" id="confirm-password" name="confirm-password" required 
-                                   minlength="6" placeholder="비밀번호를 다시 입력">
-                        </div>
-                        <div id="password-match-message" class="password-match-message" style="display: none;"></div>
-                        <button type="submit" id="change-password-btn" class="email-login-btn">
-                            <i class="fas fa-save"></i>
-                            비밀번호 변경
-                        </button>
-                        <button type="button" id="cancel-password-change" class="cancel-btn" onclick="hidePasswordChangeModal()">
-                            <i class="fas fa-times"></i>
-                            취소
-                        </button>
-                    </form>
-                </div>
-            </div>
-        </div>
 
         <!-- 내 평점 섹션 -->
-        <section id="my-ratings" class="my-ratings">
-            <div class="container">
-                <h2>내가 평가한 영화들</h2>
-                <div id="rated-movies" class="rated-movies-container">
-                    <!-- 평가한 영화들이 여기에 표시됩니다 -->
-                </div>
-            </div>
+        <section id="my-ratings" class="ratings-section">
+            <h3>내 평점</h3>
+            <div id="rated-movies" class="movies-grid"></div>
         </section>
-    </main>
+    </div>
 
-    <!-- 푸터 -->
-    <footer class="footer">
-        <div class="container">
-            <p>&copy; 2025 Movie Archive. Powered by TMDB API</p>
-        </div>
-    </footer>
-
-    <!-- Supabase SDK -->
-    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-    
-    <!-- JavaScript 파일 -->
-    <script src="supabase-config.js"></script>
-    <script src="script.js"></script>
-    
-    <!-- 초기화 스크립트 -->
-    <script>
-        console.log('✅ Movie Archive 초기화 완료');
-    </script>
+    <script src="app.js"></script>
 </body>
 </html>
