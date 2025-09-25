@@ -1,563 +1,400 @@
 // 로컬 스토리지 기반 인증 시스템
-console.log('✅ 로컬 인증 시스템 로딩됨');
+console.log('🚀 인증 시스템 초기화 중...');
 
 // 로컬 스토리지 키
 const STORAGE_KEYS = {
-    USER: 'moviesite_user',
-    RATINGS: 'moviesite_ratings'
+    USER: 'movie_archive_user',
+    RATINGS: 'movie_archive_ratings'
 };
 
-// 현재 사용자 상태
+// 전역 변수
 let currentUser = null;
+let ratingManager = null;
 
-// 페이지 로드 시 기존 로그인 확인
-document.addEventListener('DOMContentLoaded', function() {
-    checkExistingLogin();
-});
-
-// 기존 로그인 확인
-function checkExistingLogin() {
-    const savedUser = localStorage.getItem(STORAGE_KEYS.USER);
-    if (savedUser) {
-        try {
-            currentUser = JSON.parse(savedUser);
-            console.log('✅ 기존 로그인 발견:', currentUser.email);
-            
-            // 인증 상태 변경 이벤트 발생
-            setTimeout(() => {
-                if (typeof updateUIForLoggedInUser === 'function') {
-                    updateUIForLoggedInUser(currentUser);
-                }
-                if (typeof loadUserRatings === 'function') {
-                    loadUserRatings();
-                }
-            }, 100);
-        } catch (error) {
-            console.error('❌ 저장된 사용자 정보 파싱 실패:', error);
-            localStorage.removeItem(STORAGE_KEYS.USER);
-        }
-    }
-}
-
-// 평점 관리 클래스
+// 평점 관리자 클래스
 class RatingManager {
     constructor() {
-        this.ratings = this.loadFromLocalStorage();
+        this.ratings = this.loadRatings();
     }
-    
-    // 로컬 스토리지에서 평점 로드
-    loadFromLocalStorage() {
-        const saved = localStorage.getItem(STORAGE_KEYS.RATINGS);
-        return saved ? JSON.parse(saved) : {};
+
+    loadRatings() {
+        try {
+            const stored = localStorage.getItem(STORAGE_KEYS.RATINGS);
+            return stored ? JSON.parse(stored) : {};
+        } catch (error) {
+            console.error('평점 로드 오류:', error);
+            return {};
+        }
     }
-    
-    // 평점 저장
-    saveRating(movieId, movieData, rating) {
+
+    saveRatings() {
+        try {
+            localStorage.setItem(STORAGE_KEYS.RATINGS, JSON.stringify(this.ratings));
+        } catch (error) {
+            console.error('평점 저장 오류:', error);
+        }
+    }
+
+    saveRating(movieId, rating) {
+        if (!currentUser) return false;
+        
         this.ratings[movieId] = {
-            id: movieId,
-            title: movieData.title,
-            poster_path: movieData.poster_path,
+            userId: currentUser.id,
             rating: rating,
-            overview: movieData.overview,
-            release_date: movieData.release_date,
-            vote_average: movieData.vote_average,
-            rated_at: new Date().toISOString()
+            timestamp: new Date().toISOString()
         };
-        
-        // 로컬 스토리지에 저장
-        localStorage.setItem(STORAGE_KEYS.RATINGS, JSON.stringify(this.ratings));
-        console.log('✅ 평점 저장됨:', movieData.title, rating);
-        
-        return this.ratings[movieId];
+        this.saveRatings();
+        return true;
     }
-    
-    // 평점 삭제
+
     deleteRating(movieId) {
+        if (!currentUser) return false;
+        
         if (this.ratings[movieId]) {
             delete this.ratings[movieId];
-            localStorage.setItem(STORAGE_KEYS.RATINGS, JSON.stringify(this.ratings));
-            console.log('✅ 평점 삭제됨:', movieId);
-        }
-    }
-    
-    // 사용자 평점 가져오기
-    getUserRatings() {
-        return Object.values(this.ratings);
-    }
-    
-    // 특정 영화 평점 가져오기
-    getMovieRating(movieId) {
-        return this.ratings[movieId]?.rating || 0;
-    }
-    
-    // 데이터 내보내기
-    exportData() {
-        const dataStr = JSON.stringify(this.ratings, null, 2);
-        const blob = new Blob([dataStr], {type: 'application/json'});
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `movie_ratings_${new Date().toISOString().split('T')[0]}.json`;
-        a.click();
-        console.log('📁 평점 데이터 다운로드됨');
-    }
-    
-    // 데이터 가져오기
-    importData(jsonData) {
-        try {
-            this.ratings = JSON.parse(jsonData);
-            localStorage.setItem(STORAGE_KEYS.RATINGS, JSON.stringify(this.ratings));
-            console.log('📂 평점 데이터 가져오기 완료');
+            this.saveRatings();
             return true;
-        } catch (error) {
-            console.error('❌ 데이터 가져오기 실패:', error);
-            return false;
         }
+        return false;
+    }
+
+    getMovieRating(movieId) {
+        if (!currentUser) return 0;
+        
+        const rating = this.ratings[movieId];
+        return rating && rating.userId === currentUser.id ? rating.rating : 0;
+    }
+
+    getUserRatings() {
+        if (!currentUser) return [];
+        
+        return Object.entries(this.ratings)
+            .filter(([_, rating]) => rating.userId === currentUser.id)
+            .map(([movieId, rating]) => ({
+                movieId: parseInt(movieId),
+                rating: rating.rating,
+                timestamp: rating.timestamp
+            }));
     }
 }
 
-// 전역 평점 관리자 인스턴스
-const ratingManager = new RatingManager();
-
-// 로컬 스토리지 기반 유틸리티 함수들
-const SupabaseUtils = {
-    // 현재 사용자 정보 가져오기
-    getCurrentUser: async () => {
-        return currentUser;
-    },
-
-    // 사용자 프로필 생성/업데이트 (로컬에서는 불필요)
-    upsertUserProfile: async (user) => {
-        console.log('✅ 사용자 프로필 처리됨:', user.email);
-        return user;
-    },
-
-    // 사용자 평점 가져오기
-    getUserRatings: async () => {
-        if (!currentUser) return [];
-        return ratingManager.getUserRatings();
-    },
-
-    // 사용자 프로필 가져오기
-    getUserProfile: async (authId) => {
-        return currentUser;
-    },
-
-    // 평점 저장/업데이트
-    saveRating: async (movieData, rating) => {
-        if (!currentUser) throw new Error('로그인이 필요합니다');
-        return ratingManager.saveRating(movieData.id, movieData, rating);
-    },
-
-    // 평점 삭제
-    deleteRating: async (movieId) => {
-        if (!currentUser) throw new Error('로그인이 필요합니다');
-        ratingManager.deleteRating(movieId);
+// UI 상태 관리 함수들
+function showLoginModal() {
+    const modal = document.getElementById('login-modal');
+    if (modal) {
+        modal.style.display = 'flex';
+        console.log('✅ 로그인 모달 표시');
     }
-};
+}
 
-// 로컬 스토리지 기반 인증 함수들
+function hideLoginModal() {
+    const modal = document.getElementById('login-modal');
+    if (modal) {
+        modal.style.display = 'none';
+        console.log('✅ 로그인 모달 숨김');
+    }
+}
+
+function showMainContent() {
+    const sections = ['search-section', 'results-section', 'rated-movies-section'];
+    sections.forEach(id => {
+        const element = document.getElementById(id);
+        if (element) {
+            element.style.display = 'block';
+        }
+    });
+    console.log('✅ 메인 콘텐츠 표시');
+}
+
+function hideMainContent() {
+    const sections = ['search-section', 'results-section', 'rated-movies-section'];
+    sections.forEach(id => {
+        const element = document.getElementById(id);
+        if (element) {
+            element.style.display = 'none';
+        }
+    });
+    console.log('✅ 메인 콘텐츠 숨김');
+}
+
+function updateAuthUI(isLoggedIn, user = null) {
+    const loginBtn = document.getElementById('login-btn');
+    const userInfo = document.getElementById('user-info');
+    const userName = document.getElementById('user-name');
+    
+    if (isLoggedIn && user) {
+        // 로그인된 상태
+        if (loginBtn) loginBtn.style.display = 'none';
+        if (userInfo) userInfo.style.display = 'flex';
+        if (userName) userName.textContent = user.name || user.email;
+        document.body.classList.add('logged-in');
+    } else {
+        // 로그아웃된 상태
+        if (loginBtn) loginBtn.style.display = 'flex';
+        if (userInfo) userInfo.style.display = 'none';
+        document.body.classList.remove('logged-in');
+    }
+}
+
+// 인증 함수들
 async function signInWithGoogle() {
-    console.log('🔄 Google 로그인 시뮬레이션...');
-    alert('signInWithGoogle 함수가 호출되었습니다!');
+    console.log('🔄 Google 로그인 시작...');
     
     try {
-        // 로그인 시뮬레이션 (즉시 실행)
+        // 사용자 정보 생성
         const user = {
-            email: 'sunson0@gmail.com',
-            name: 'Test User',
-            id: 'local_user_' + Date.now(),
+            id: 'google_user_' + Date.now(),
+            email: 'test@gmail.com',
+            name: '테스트 사용자',
             loginTime: new Date().toISOString()
         };
-        
-        console.log('👤 사용자 객체 생성:', user);
         
         // 로컬 스토리지에 저장
         localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
         currentUser = user;
         
-        console.log('💾 로컬 스토리지 저장 완료');
-        console.log('✅ 로그인 성공:', user.email);
+        console.log('✅ Google 로그인 성공:', user.email);
         
         // UI 업데이트
-        if (typeof updateUIForLoggedInUser === 'function') {
-            console.log('🔄 UI 업데이트 시작...');
-            updateUIForLoggedInUser(user);
-        } else {
-            console.error('❌ updateUIForLoggedInUser 함수를 찾을 수 없음');
-        }
-        
-        // 로그인 모달 닫기 (강제 처리)
-        const loginModal = document.getElementById('login-modal');
-        if (loginModal) {
-            console.log('🔄 로그인 모달 닫기...');
-            
-            // 여러 방법으로 모달 숨기기
-            loginModal.style.display = 'none !important';
-            loginModal.style.visibility = 'hidden';
-            loginModal.style.opacity = '0';
-            loginModal.classList.add('hidden');
-            
-            // 부모 요소도 숨기기
-            const modalContainer = loginModal.parentElement;
-            if (modalContainer) {
-                modalContainer.style.display = 'none';
-            }
-            
-            console.log('✅ 로그인 모달 숨김 완료');
-            console.log('모달 스타일:', {
-                display: loginModal.style.display,
-                visibility: loginModal.style.visibility,
-                opacity: loginModal.style.opacity,
-                classList: loginModal.classList.toString()
-            });
-        } else {
-            console.error('❌ 로그인 모달 요소를 찾을 수 없음');
-        }
-        
-        // 모든 섹션 표시
-        const searchSection = document.getElementById('search-section');
-        const resultsSection = document.getElementById('results-section');
-        const ratedMoviesSection = document.getElementById('rated-movies-section');
-        
-        if (searchSection) {
-            searchSection.style.display = 'block';
-            console.log('✅ 검색 섹션 표시');
-        }
-        if (resultsSection) {
-            resultsSection.style.display = 'block';
-            console.log('✅ 결과 섹션 표시');
-        }
-        if (ratedMoviesSection) {
-            ratedMoviesSection.style.display = 'block';
-            console.log('✅ 평점 섹션 표시');
-        }
-        
-        // body에 logged-in 클래스 추가
-        document.body.classList.add('logged-in');
-        console.log('✅ body에 logged-in 클래스 추가');
+        updateAuthUI(true, user);
+        hideLoginModal();
+        showMainContent();
         
         // 평점 로드
         if (typeof loadUserRatings === 'function') {
-            console.log('🔄 사용자 평점 로드...');
             loadUserRatings();
         }
         
-        alert('로그인이 완료되었습니다!');
+        return { success: true, user };
         
     } catch (error) {
-        console.error('❌ 로그인 중 오류 발생:', error);
-        alert('로그인 중 오류가 발생했습니다: ' + error.message);
+        console.error('❌ Google 로그인 실패:', error);
+        return { success: false, error: error.message };
     }
 }
 
 async function signInWithEmail(email, password) {
-    console.log('🔄 이메일 로그인 시뮬레이션...');
+    console.log('🔄 이메일 로그인 시작...');
     
-    // 간단한 유효성 검사
     if (!email || !password) {
         alert('이메일과 비밀번호를 입력해주세요.');
-        return;
+        return { success: false, error: '입력값 누락' };
     }
     
-    if (password.length < 6) {
-        alert('비밀번호는 최소 6자 이상이어야 합니다.');
-        return;
-    }
-    
-    // 로그인 시뮬레이션
-    setTimeout(() => {
+    try {
+        // 사용자 정보 생성
         const user = {
+            id: 'email_user_' + Date.now(),
             email: email,
             name: email.split('@')[0],
-            id: 'local_user_' + Date.now(),
             loginTime: new Date().toISOString()
         };
         
+        // 로컬 스토리지에 저장
         localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
         currentUser = user;
         
         console.log('✅ 이메일 로그인 성공:', user.email);
         
-        if (typeof updateUIForLoggedInUser === 'function') {
-            updateUIForLoggedInUser(user);
-        }
+        // UI 업데이트
+        updateAuthUI(true, user);
+        hideLoginModal();
+        showMainContent();
         
-        if (typeof hideLoginModal === 'function') {
-            hideLoginModal();
-        }
-        
-        // 모든 섹션 표시
-        const searchSection = document.getElementById('search-section');
-        const resultsSection = document.getElementById('results-section');
-        const ratedMoviesSection = document.getElementById('rated-movies-section');
-        
-        if (searchSection) searchSection.style.display = 'block';
-        if (resultsSection) resultsSection.style.display = 'block';
-        if (ratedMoviesSection) ratedMoviesSection.style.display = 'block';
-        
+        // 평점 로드
         if (typeof loadUserRatings === 'function') {
             loadUserRatings();
         }
-    }, 1000);
-}
-
-async function signUpWithEmail(name, email, password) {
-    console.log('🔄 이메일 회원가입 시뮬레이션...');
-    
-    // 간단한 유효성 검사
-    if (!name || !email || !password) {
-        alert('모든 필드를 입력해주세요.');
-        return;
+        
+        return { success: true, user };
+        
+    } catch (error) {
+        console.error('❌ 이메일 로그인 실패:', error);
+        return { success: false, error: error.message };
     }
-    
-    if (password.length < 6) {
-        alert('비밀번호는 최소 6자 이상이어야 합니다.');
-        return;
-    }
-    
-    // 회원가입 시뮬레이션
-    setTimeout(() => {
-        const user = {
-            email: email,
-            name: name,
-            id: 'local_user_' + Date.now(),
-            loginTime: new Date().toISOString()
-        };
-        
-        localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
-        currentUser = user;
-        
-        console.log('✅ 회원가입 성공:', user.email);
-        alert('회원가입이 완료되었습니다!');
-        
-        if (typeof updateUIForLoggedInUser === 'function') {
-            updateUIForLoggedInUser(user);
-        }
-        
-        if (typeof hideLoginModal === 'function') {
-            hideLoginModal();
-        }
-        
-        // 모든 섹션 표시
-        const searchSection = document.getElementById('search-section');
-        const resultsSection = document.getElementById('results-section');
-        const ratedMoviesSection = document.getElementById('rated-movies-section');
-        
-        if (searchSection) searchSection.style.display = 'block';
-        if (resultsSection) resultsSection.style.display = 'block';
-        if (ratedMoviesSection) ratedMoviesSection.style.display = 'block';
-        
-        if (typeof loadUserRatings === 'function') {
-            loadUserRatings();
-        }
-    }, 1000);
 }
 
 async function signOut() {
-    console.log('🔄 로그아웃...');
-    
-    // 로컬 스토리지에서 사용자 정보 제거
-    localStorage.removeItem(STORAGE_KEYS.USER);
-    currentUser = null;
-    
-    console.log('✅ 로그아웃 성공');
-    
-    // 모든 섹션 숨기기
-    const searchSection = document.getElementById('search-section');
-    const resultsSection = document.getElementById('results-section');
-    const ratedMoviesSection = document.getElementById('rated-movies-section');
-    
-    if (searchSection) searchSection.style.display = 'none';
-    if (resultsSection) resultsSection.style.display = 'none';
-    if (ratedMoviesSection) ratedMoviesSection.style.display = 'none';
-    
-    // body에서 logged-in 클래스 제거
-    document.body.classList.remove('logged-in');
-    console.log('✅ body에서 logged-in 클래스 제거');
-    
-    // 로그인 모달 다시 표시
-    const loginModal = document.getElementById('login-modal');
-    if (loginModal) {
-        console.log('🔄 로그인 모달 다시 표시...');
-        loginModal.style.display = 'flex';
-        loginModal.style.visibility = 'visible';
-        loginModal.style.opacity = '1';
-        loginModal.classList.remove('hidden');
-        console.log('✅ 로그인 모달 표시 완료');
-    }
-    
-    // UI 업데이트
-    if (typeof updateUIForLoggedOutUser === 'function') {
-        updateUIForLoggedOutUser();
-    }
-    
-    if (typeof clearUserData === 'function') {
-        clearUserData();
-    }
-}
-
-async function sendPasswordReset(email) {
-    console.log('🔄 비밀번호 재설정 시뮬레이션...');
-    
-    if (!email) {
-        alert('이메일을 입력해주세요.');
-        return;
-    }
-    
-    // 비밀번호 재설정 시뮬레이션
-    setTimeout(() => {
-        console.log('✅ 비밀번호 재설정 이메일 발송 시뮬레이션');
-        alert('비밀번호 재설정 이메일을 발송했습니다. (시뮬레이션)');
-        
-        if (typeof hidePasswordResetForm === 'function') {
-            hidePasswordResetForm();
-        }
-    }, 1000);
-}
-
-async function changePassword(newPassword, confirmPassword) {
-    console.log('🔄 비밀번호 변경 시뮬레이션...');
-    
-    if (newPassword !== confirmPassword) {
-        alert('비밀번호가 일치하지 않습니다.');
-        return;
-    }
-    
-    if (newPassword.length < 6) {
-        alert('비밀번호는 최소 6자 이상이어야 합니다.');
-        return;
-    }
-    
-    // 비밀번호 변경 시뮬레이션
-    setTimeout(() => {
-        console.log('✅ 비밀번호 변경 성공');
-        alert('비밀번호가 성공적으로 변경되었습니다. (시뮬레이션)');
-        
-        const modal = document.getElementById('password-change-modal');
-        if (modal) {
-            modal.classList.add('hidden');
-        }
-    }, 1000);
-}
-
-// UI 업데이트 함수들
-function updateUIForLoggedInUser(user) {
-    console.log('🎨 로그인 사용자 UI 업데이트:', user.email);
-    
-    const loginBtn = document.getElementById('login-btn');
-    const userInfo = document.getElementById('user-info');
-    const userName = document.getElementById('user-name');
-    const logoutBtn = document.getElementById('logout-btn');
-    
-    if (loginBtn) loginBtn.style.display = 'none';
-    if (userInfo) {
-        userInfo.style.display = 'flex';
-        userInfo.classList.remove('hidden');
-    }
-    if (userName) userName.textContent = user.email;
-    if (logoutBtn) logoutBtn.style.display = 'flex';
-}
-
-function updateUIForLoggedOutUser() {
-    console.log('🎨 로그아웃 사용자 UI 업데이트');
-    
-    const loginBtn = document.getElementById('login-btn');
-    const userInfo = document.getElementById('user-info');
-    
-    if (loginBtn) loginBtn.style.display = 'flex';
-    if (userInfo) userInfo.style.display = 'none';
-}
-
-function clearUserData() {
-    console.log('🧹 사용자 데이터 정리');
-    
-    // 평점 목록 정리
-    const ratedMoviesContainer = document.getElementById('rated-movies');
-    if (ratedMoviesContainer) {
-        ratedMoviesContainer.innerHTML = '<p class="no-results">로그인 후 평가한 영화를 확인할 수 있습니다.</p>';
-    }
-}
-
-// 사용자 평점 로드
-async function loadUserRatings() {
-    console.log('📊 사용자 평점 로드...');
-    
-    if (!currentUser) return;
+    console.log('🔄 로그아웃 시작...');
     
     try {
-        const ratings = ratingManager.getUserRatings();
-        console.log('평점 데이터:', ratings);
+        // 로컬 스토리지에서 사용자 정보 제거
+        localStorage.removeItem(STORAGE_KEYS.USER);
+        currentUser = null;
         
-        // 로컬 스토리지 형식으로 변환 (기존 코드 호환성)
-        const ratedMovies = {};
-        ratings.forEach(rating => {
-            ratedMovies[rating.id] = {
-                id: rating.id,
-                title: rating.title,
-                poster_path: rating.poster_path,
-                rating: rating.rating,
-                rated_at: rating.rated_at
-            };
-        });
-        
-        // 전역 변수 업데이트
-        window.ratedMovies = ratedMovies;
+        console.log('✅ 로그아웃 성공');
         
         // UI 업데이트
-        if (typeof displayRatedMovies === 'function') {
-            displayRatedMovies();
-        }
+        updateAuthUI(false);
+        hideMainContent();
+        showLoginModal();
+        
+        return { success: true };
         
     } catch (error) {
-        console.error('사용자 평점 로드 실패:', error);
+        console.error('❌ 로그아웃 실패:', error);
+        return { success: false, error: error.message };
     }
 }
 
-// 영화 평점 저장
-async function saveMovieRating(userId, movieData, rating) {
-    console.log('💾 영화 평점 저장:', movieData.title, rating);
+// 기존 로그인 상태 확인
+function checkExistingLogin() {
+    console.log('🔍 기존 로그인 상태 확인...');
     
     try {
-        const result = ratingManager.saveRating(movieData.id, movieData, rating);
-        console.log('✅ 평점 저장 성공:', result);
+        const storedUser = localStorage.getItem(STORAGE_KEYS.USER);
         
-        // 평점 목록 새로고침
-        await loadUserRatings();
-        
-        return result;
-        
+        if (storedUser) {
+            currentUser = JSON.parse(storedUser);
+            console.log('✅ 기존 로그인 발견:', currentUser.email);
+            
+            // UI 업데이트
+            updateAuthUI(true, currentUser);
+            hideLoginModal();
+            showMainContent();
+            
+            // 평점 로드
+            if (typeof loadUserRatings === 'function') {
+                loadUserRatings();
+            }
+            
+            return true;
+        } else {
+            console.log('ℹ️ 로그인되지 않은 상태');
+            
+            // 초기 화면 설정
+            updateAuthUI(false);
+            hideMainContent();
+            showLoginModal();
+            
+            return false;
+        }
     } catch (error) {
-        console.error('평점 저장 실패:', error);
-        throw error;
+        console.error('❌ 로그인 상태 확인 오류:', error);
+        
+        // 오류 시 초기 상태로 설정
+        updateAuthUI(false);
+        hideMainContent();
+        showLoginModal();
+        
+        return false;
     }
 }
 
-// 사용자 영화 평점 가져오기
-async function getUserMovieRating(movieId) {
-    if (!currentUser) return 0;
+// 평점 관련 함수들
+function saveMovieRating(movieId, rating) {
+    if (!ratingManager) return false;
+    return ratingManager.saveRating(movieId, rating);
+}
+
+function getUserMovieRating(movieId) {
+    if (!ratingManager) return 0;
     return ratingManager.getMovieRating(movieId);
 }
 
-// 전역 함수로 노출 (기존 코드 호환성)
+function loadUserRatings() {
+    if (!ratingManager || !currentUser) return [];
+    
+    const ratings = ratingManager.getUserRatings();
+    console.log('📊 사용자 평점 로드:', ratings.length + '개');
+    return ratings;
+}
+
+function updateUIForLoggedInUser(user) {
+    updateAuthUI(true, user);
+}
+
+function updateUIForLoggedOutUser() {
+    updateAuthUI(false);
+}
+
+function clearUserData() {
+    localStorage.removeItem(STORAGE_KEYS.RATINGS);
+    if (ratingManager) {
+        ratingManager = new RatingManager();
+    }
+}
+
+// 데이터 백업/복원
+function exportUserData() {
+    if (!currentUser) {
+        alert('로그인이 필요합니다.');
+        return;
+    }
+    
+    const data = {
+        user: currentUser,
+        ratings: ratingManager ? ratingManager.ratings : {},
+        exportTime: new Date().toISOString()
+    };
+    
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `movie_archive_${currentUser.email}_${new Date().toISOString().split('T')[0]}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+function importUserData(file) {
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const data = JSON.parse(e.target.result);
+            
+            if (data.ratings && ratingManager) {
+                ratingManager.ratings = data.ratings;
+                ratingManager.saveRatings();
+                alert('데이터 가져오기가 완료되었습니다.');
+                
+                if (currentUser && typeof loadUserRatings === 'function') {
+                    loadUserRatings();
+                }
+            }
+        } catch (error) {
+            alert('파일 형식이 올바르지 않습니다.');
+            console.error('데이터 가져오기 오류:', error);
+        }
+    };
+    reader.readAsText(file);
+}
+
+// 초기화
+function initializeAuth() {
+    console.log('🚀 인증 시스템 초기화...');
+    
+    // 평점 관리자 초기화
+    ratingManager = new RatingManager();
+    
+    // 기존 로그인 상태 확인
+    checkExistingLogin();
+    
+    console.log('✅ 인증 시스템 초기화 완료');
+}
+
+// 전역 함수로 노출
 window.signInWithGoogle = signInWithGoogle;
 window.signInWithEmail = signInWithEmail;
-window.signUpWithEmail = signUpWithEmail;
 window.signOut = signOut;
-window.sendPasswordReset = sendPasswordReset;
-window.changePassword = changePassword;
 window.saveMovieRating = saveMovieRating;
 window.getUserMovieRating = getUserMovieRating;
 window.loadUserRatings = loadUserRatings;
 window.updateUIForLoggedInUser = updateUIForLoggedInUser;
 window.updateUIForLoggedOutUser = updateUIForLoggedOutUser;
 window.clearUserData = clearUserData;
-window.ratingManager = ratingManager;
+window.exportUserData = exportUserData;
+window.importUserData = importUserData;
+window.showLoginModal = showLoginModal;
+window.hideLoginModal = hideLoginModal;
 
-// 파일 로딩 확인
-console.log('✅ supabase-config.js 파일이 완전히 로드되었습니다!');
-console.log('전역 함수들:', {
-    signInWithGoogle: typeof window.signInWithGoogle,
-    signInWithEmail: typeof window.signInWithEmail,
-    signOut: typeof window.signOut
-});
+// DOM 로드 완료 시 초기화
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeAuth);
+} else {
+    initializeAuth();
+}
+
+console.log('✅ supabase-config.js 로드 완료');

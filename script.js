@@ -608,24 +608,15 @@ window.hideLoginModal = hideLoginModal;
 // script.js 로딩 확인
 console.log('✅ script.js 파일 로딩됨');
 
-// 로컬 스토리지 기반 로그인 함수들
+// 로그인 핸들러 함수들
 function handleGoogleLogin() {
     console.log('🔄 Google 로그인 버튼 클릭');
-    alert('Google 로그인 버튼이 클릭되었습니다!');
-    
-    // 전역 함수 확인
-    console.log('전역 signInWithGoogle 함수 존재 여부:', typeof signInWithGoogle);
-    console.log('window.signInWithGoogle 함수 존재 여부:', typeof window.signInWithGoogle);
     
     if (typeof signInWithGoogle === 'function') {
-        console.log('✅ signInWithGoogle 함수 호출 중...');
         signInWithGoogle();
-    } else if (typeof window.signInWithGoogle === 'function') {
-        console.log('✅ window.signInWithGoogle 함수 호출 중...');
-        window.signInWithGoogle();
     } else {
         console.error('❌ signInWithGoogle 함수를 찾을 수 없음');
-        alert('로그인 시스템이 아직 준비되지 않았습니다. 콘솔을 확인해주세요.');
+        alert('로그인 시스템이 준비되지 않았습니다.');
     }
 }
 
@@ -768,22 +759,17 @@ function toggleAuthMode() {
 }
 
 function handleEmailLogin() {
-    console.log('이메일 로그인 핸들러 호출...');
-    alert('이메일 로그인 버튼이 클릭되었습니다!');
+    console.log('🔄 이메일 로그인 버튼 클릭');
     
     const email = document.getElementById('email-input')?.value.trim();
     const password = document.getElementById('password-input')?.value.trim();
-    
-    console.log('입력값 확인:', { email, password: password ? '***' : '' });
     
     if (!email || !password) {
         alert('이메일과 비밀번호를 입력해주세요.');
         return;
     }
     
-    // Supabase 함수 존재 여부 확인
     if (typeof signInWithEmail === 'function') {
-        console.log('signInWithEmail 함수 호출...');
         signInWithEmail(email, password);
     } else {
         console.error('signInWithEmail 함수를 찾을 수 없습니다.');
@@ -1083,37 +1069,8 @@ window.reinitializeDOM = function() {
 document.addEventListener('DOMContentLoaded', function() {
     init();
     checkUrlParams();
-    initializeFirstScreen();
 });
 
-// 첫 화면 초기화
-function initializeFirstScreen() {
-    console.log('🎬 첫 화면 초기화...');
-    
-    // 모든 섹션 숨기기
-    const searchSection = document.getElementById('search-section');
-    const resultsSection = document.getElementById('results-section');
-    const ratedMoviesSection = document.getElementById('rated-movies-section');
-    
-    if (searchSection) searchSection.style.display = 'none';
-    if (resultsSection) resultsSection.style.display = 'none';
-    if (ratedMoviesSection) ratedMoviesSection.style.display = 'none';
-    
-    // 배경 데이터 완전 초기화
-    clearResults();
-    clearUserData();
-    
-    // URL 파라미터 확인
-    const urlParams = new URLSearchParams(window.location.search);
-    const action = urlParams.get('action');
-    
-    // 비밀번호 재설정이 아니고 로그인되지 않은 경우에만 로그인 모달 표시
-    if (action !== 'reset-password' && !currentUser) {
-        setTimeout(() => {
-            showLoginModal();
-        }, 100);
-    }
-}
 
 // 데이터 관리 함수들
 function exportUserData() {
