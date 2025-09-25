@@ -611,12 +611,21 @@ console.log('✅ script.js 파일 로딩됨');
 // 로컬 스토리지 기반 로그인 함수들
 function handleGoogleLogin() {
     console.log('🔄 Google 로그인 버튼 클릭');
+    alert('Google 로그인 버튼이 클릭되었습니다!');
+    
+    // 전역 함수 확인
+    console.log('전역 signInWithGoogle 함수 존재 여부:', typeof signInWithGoogle);
+    console.log('window.signInWithGoogle 함수 존재 여부:', typeof window.signInWithGoogle);
     
     if (typeof signInWithGoogle === 'function') {
+        console.log('✅ signInWithGoogle 함수 호출 중...');
         signInWithGoogle();
+    } else if (typeof window.signInWithGoogle === 'function') {
+        console.log('✅ window.signInWithGoogle 함수 호출 중...');
+        window.signInWithGoogle();
     } else {
         console.error('❌ signInWithGoogle 함수를 찾을 수 없음');
-        alert('로그인 시스템이 아직 준비되지 않았습니다.');
+        alert('로그인 시스템이 아직 준비되지 않았습니다. 콘솔을 확인해주세요.');
     }
 }
 
@@ -760,6 +769,7 @@ function toggleAuthMode() {
 
 function handleEmailLogin() {
     console.log('이메일 로그인 핸들러 호출...');
+    alert('이메일 로그인 버튼이 클릭되었습니다!');
     
     const email = document.getElementById('email-input')?.value.trim();
     const password = document.getElementById('password-input')?.value.trim();
